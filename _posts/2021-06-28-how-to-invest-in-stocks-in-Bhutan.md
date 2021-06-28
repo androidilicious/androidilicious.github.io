@@ -2,7 +2,7 @@ __zmeta_tags:
 __zmeta_project: 
 ---
 layout: post
-title: How do you invest in stocks in Bhutan?
+title: How do you invest in stocks in Bhutan
 published: true
 tags: diwas puri bhutan stocks trade shares bnb securities ipo market buy sell rseb
 ---
