@@ -5,7 +5,6 @@ permalink: /about/
 ---
 
 Thimphu based blogger passionate about anything that’s related to finance, technology & art.
-
 ### Personal Projects
 
 - [English Dzongkha Dictionary](https://play.google.com/store/apps/details?id=com.diwaspuri.dzongkhadictionaryoffline)
