@@ -4,12 +4,14 @@ title: About
 permalink: /about/
 ---
 
-Some information about you!
+Thimphu based blogger passionate about anything that’s related to finance, technology & art.
 
-### More Information
+### Personal Projects
 
-A place to include any other types of information that you'd like to include about yourself.
+- [English Dzongkha Dictionary](https://play.google.com/store/apps/details?id=com.diwaspuri.dzongkhadictionaryoffline)
+- [Dzongkha English Dictionary](https://play.google.com/store/apps/details?id=com.diwaspuri.dzongkhaenglishdictionarybook)
+- [aJigs.com](https://ajigs.com)
 
 ### Contact me
 
-[email@domain.com](mailto:email@domain.com)
+[diwaspuri@gmail.com](mailto:diwaspuri@gmail.com)
