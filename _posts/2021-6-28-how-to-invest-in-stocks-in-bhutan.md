@@ -1,4 +1,3 @@
-
 ---
 layout: post
 title: How do you invest in stocks in Bhutan?
@@ -25,7 +24,6 @@ Presently there are 7 brokers and they are as follows;
 5. Drukyul Securities
 6. Lekpay Dolma Securities
 7. Sershing Securities
-
 
 Once your account is created with RSEB, you will be notified about the same. The only thing left for you to do then would be to commence the trading process. The form to buy and sell is as shown below.
 
