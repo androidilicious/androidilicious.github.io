@@ -3,6 +3,8 @@ __zmeta_project:
 ---
 layout: post
 title: How do you invest in stocks in Bhutan?
+published: true
+tags: diwas puri bhutan stocks trade shares bnb securities ipo market buy sell rseb
 ---
 
 When you say you want to buy a company’s stock, you are essentially buying some fraction of the company in the form of shares. For instance, if you visit [RSEB Website](https://rsebl.org.bt/), you will see that a share of BNB is currently trading at Nu. 31 (Dec, 2020). This means that any authorized individual or entity can buy a share of company BNB at the stipulated price. However, buying and participating in the trading of shares is easier said than done.  We shall go over the exact process of how to be able to buy a share of BNB but before that, we must understand the role that brokers play in this entire process.
