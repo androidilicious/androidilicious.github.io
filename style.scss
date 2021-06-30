@@ -284,10 +284,8 @@ footer {
   text-align: center;
 }
 
-.center-image
-{
-    margin: 0 auto;
-    display: block;
+.center {
+  text-align: center;
 }
 
 // Settled on moving the import of syntax highlighting to the bottom of the CSS

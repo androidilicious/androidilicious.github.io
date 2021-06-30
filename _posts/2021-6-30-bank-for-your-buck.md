@@ -14,7 +14,8 @@ There is another class of deposit account that's timebound which are called term
 
 In Bhutan, there are 5 banks that provide you with all three kinds of deposit products. The comparison of interest rates of various types of deposit products are presented below (source: RMA Monthly Bulletin, January 2021);
 
-![Deposit interest rates by bank and by product](/images/deposit-rates.png){: .center-image }
+{: .center}
+![Deposit interest rates by bank and by product](/images/deposit-rates.png)
 
 As you can see, T-Bank Ltd provides the highest savings interest exceeding even the generous BDBL, exceeding by a full 0.15%. If you consider a Nu. 100 savings, it may just amount to Nu. 0.15 but as the investments increase, it forms a sizable amount. Someone with an investment of Nu. 100,000 would have to forgo Nu. 150 in interest in a year, if they were to choose BDBL instead of T-Bank Ltd. Similarly, choosing either BOBL, BNBL, or DPNBL as opposed to T-Bank Ltd. for the same investment, would mean a loss of Nu. 750 in interests in a year. It is thus sensible to think that one would only choose the bank that provides the most bang for their buck. If it were the case, T-Bank would be brimming with deposits, which is not the case. There are several factors that people consider when choosing to avail a certain bank's services and that includes factors such as proximity, digital channels, and customer service among others. One must also be wary of other fees and charges that a bank levies such as annual maintenance fees. Although T-Bank has a marginally higher savings interest rate, it's annual maintenance fee is Nu. 250 compared to BNB's and BOB's Nu. 150. All banks charge annual maintenance fees. There are also other nuances like the requirement of minimum balance to open an account with a bank, that you need to check before opening an account.
 
