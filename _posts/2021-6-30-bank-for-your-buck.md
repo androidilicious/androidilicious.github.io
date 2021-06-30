@@ -1,10 +1,10 @@
 ---
 layout: post
 title: Bank for your Buck
+categories: [Blog, Finance]
 published: true
 tags: diwas puri bhutan bank buck 4 interest investment rma bnb bob tbank dpnb bdb technology digital transformation
 ---
-
 
 Everybody likes to make money and what better way to make more of it than to just let it sit at a bank. Banks have long existed as an intermediary between people wishing to store their money safely and those that want to use it for various purposes. The depositors essentially lend their money out to the banks at a prespecified interest rate who in turn lend it out to people that are in need of money. Naturally, banks charge an interest rate to these people which is a notch higher than their own interest rate that is given to the depositors.
 
