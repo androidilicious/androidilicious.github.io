@@ -6,7 +6,9 @@ tags: stock price bhutan bnb securities shares buy sell royal national bank
 ---
 
 
-Never in history has the Bhutanese stock market received so much attention as it has now, thanks to the recent auction of BNB and RICB shares held by the HM's Secretariat which prompted even villagers from the remotest regions of the country, to chime in to 'contribute' to the HM's fund. One could hear people outright justify their purchase of the shares by praising the noble cause of His Majesty and how they are hoping to be part of it. It is indeed heartwarming to witness people from all walks of life, from gelongs to shopkeepers, from teachers to villagers, and from corporations to housewives, chip in to buy the shares that are up for grabs. However, as noble a cause as it is, people buying them should think twice about what it means to put money in it and what opportunities and risks live inherent within.
+Never in history has the Bhutanese stock market received so much attention as it has now, thanks to the recent auction of BNB and RICB shares held by the HM's Secretariat which prompted even villagers from the remotest regions of the country, to chime in to 'contribute' to the HM's fund. 
+
+One could hear people outright justify their purchase of the shares by praising the noble cause of His Majesty and how they are hoping to be part of it. It is indeed heartwarming to witness people from all walks of life, from gelongs to shopkeepers, from teachers to villagers, and from corporations to housewives, chip in to buy the shares that are up for grabs. However, as noble a cause as it is, people buying them should think twice about what it means to put money in it and what opportunities and risks live inherent within.
 
 BNB and RICB are integral part of the financial landscape in Bhutan. The former is strictly in the banking business whereas the latter partakes in both insurance and lending business. It should be interesting to note that BNB was born out of RICB in the form of unit trust which later on became the first commercial banking entity in the country. RICB was established in 1975 whereas BNB started off in 1997.
 
