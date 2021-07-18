@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Dangers of Blind Buy?
+title: What would you lose when buying shares?
 published: true
 tags: stock price bhutan bnb securities shares buy sell royal national bank
 ---
