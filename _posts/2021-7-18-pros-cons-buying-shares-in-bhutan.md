@@ -5,8 +5,7 @@ published: true
 tags: stock price bhutan bnb securities shares buy sell royal national bank
 ---
 
-
-Never in history has the Bhutanese stock market received so much attention as it has now, thanks to the recent auction of BNB and RICB shares held by the HM's Secretariat which prompted even villagers from the remotest regions of the country, to chime in to 'contribute' to the HM's fund. 
+Never in history has the Bhutanese stock market received so much attention as it has now, thanks to the recent auction of BNB and RICB shares held by the HM's Secretariat which prompted even villagers from the remotest regions of the country, to chime in to contribute to the HM's fund. 
 
 One could hear people outright justify their purchase of the shares by praising the noble cause of His Majesty and how they are hoping to be part of it. It is indeed heartwarming to witness people from all walks of life, from gelongs to shopkeepers, from teachers to villagers, and from corporations to housewives, chip in to buy the shares that are up for grabs. However, as noble a cause as it is, people buying them should think twice about what it means to put money in it and what opportunities and risks live inherent within.
 
@@ -34,7 +33,7 @@ If you don't time your purchase properly, especially in the Bhutanese context, y
 
 I have over the past few years noticed that share prices usually go up as AGMs (Annual General Meetings) of respective companies near and dip during other times of the year. For instance, the share price of DFAL which was as low as Nu. 59 just a few months ago has increased to Nu. 90 today, which I attribute to the renewed interest of people in stocks and the anticipation of an upcoming profit declaration. The sudden gain of ((90-59)/59*100)=52.5424 is quite substantial.
 
-However, if you don't time it properly, short-term gains might go down the drains
+However, if you don't time it properly, short-term gains might go down the drain.
 
 
 
