@@ -31,7 +31,7 @@ BNB and RICB are integral part of the financial landscape in Bhutan. The former 
 
 If you don't time your purchase properly, especially in the Bhutanese context, you might not be able to make short-term gains. However, long-term benefits in the Bhutanese stocks are almost always guaranteed.
 
-I have over the past few years noticed that share prices usually go up as AGMs (Annual General Meetings) of respective companies near and dip during other times of the year. For instance, the share price of DFAL which was as low as Nu. 59 just a few months ago has increased to Nu. 90 today, which I attribute to the renewed interest of people in stocks and the anticipation of an upcoming profit declaration. The sudden gain of ((90-59)/59*100)=52.5424 is quite substantial.
+I have over the past few years noticed that share prices usually go up as AGMs (Annual General Meetings) of respective companies near and dip during other times of the year. For instance, the share price of DFAL which was as low as Nu. 59 just a few months ago has increased to Nu. 90 today, which I attribute to the renewed interest of people in stocks and the anticipation of an upcoming profit declaration. The sudden gain of ((90-59)/59*100)=52.5 % is quite substantial.
 
 However, if you don't time it properly, short-term gains might go down the drain.
 
