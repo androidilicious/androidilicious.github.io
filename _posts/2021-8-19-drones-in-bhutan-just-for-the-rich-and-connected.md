@@ -8,9 +8,8 @@ tags: drone bhutan laws regulations strict uas aircraft pilot remote
 ---
 
 
-```
 Update: Import of drones in Bhutan is prohibited unless you are a government agency.
-```
+
 
 Flying drones in Bhutan as a recreational and creative activity is a prohibited affair. One can't simply purchase a drone and go about flying it outside. Of course, many responsible governments have seen to it that drones are registered before use, which I think should also be done in Bhutan (and is already being done). What is the most irritating aspect of the entire fiasco is the way authorities make it so difficult to fly the drone.
 
