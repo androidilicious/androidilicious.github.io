@@ -1,12 +1,16 @@
+__zmeta_tags: 
+__zmeta_project: 
 ---
 layout: post
-title: What would you lose when buying shares?
+title: Are dones in Bhutan just for the rich and powerful?
 published: true
-tags: stock price bhutan bnb securities shares buy sell royal national bank
+tags: drone bhutan laws regulations strict uas aircraft pilot remote
 ---
 
 
+```
 Update: Import of drones in Bhutan is prohibited unless you are a government agency.
+```
 
 Flying drones in Bhutan as a recreational and creative activity is a prohibited affair. One can't simply purchase a drone and go about flying it outside. Of course, many responsible governments have seen to it that drones are registered before use, which I think should also be done in Bhutan (and is already being done). What is the most irritating aspect of the entire fiasco is the way authorities make it so difficult to fly the drone.
 
@@ -20,16 +24,15 @@ Once you are done with the registration, comes the fateful day of flying your be
 
 If you are one of those lucky enough to get the necessary clearances from these institutions, welcome to the next level where you have to prove your competence and talent in piloting these flying objects. If you are one of those that recently purchased a drone to just fly as a hobby or film some awesome shots for your YouTube, you are out of luck because it is impossible for you to obtain 'documentary evidence' to prove to the relevant agencies that you can indeed fly. So Good Luck!
 
-You can find similar limitations <a href="https://www.tourism.gov.bt/uploads/attachment_files/x3Yt_tcb_042916_notice.pdf">here</a> in the notification published by BCAA which is a slap in the face telling you to not fly.
+You can find similar limitations [https://www.tourism.gov.bt/uploads/attachment_files/x3Yt_tcb_042916_notice.pdf](here) in the notification published by BCAA which is a slap in the face telling you to not fly.
 
 For the record, all of our neighboring countries have sane drone laws as can be referenced below. Ours is the only absurd one.
 
-<a href="https://uavcoach.com/drone-laws-in-india/">https://uavcoach.com/drone-laws-in-india/</a>
+[https://uavcoach.com/drone-laws-in-india/](Indian Drone Laws)
 
-<a href="https://uavcoach.com/drone-laws-in-nepal/">https://uavcoach.com/drone-laws-in-nepal/</a>
+[https://uavcoach.com/drone-laws-in-nepal/](Nepali Drone Laws)
 
-<a href="https://uavcoach.com/drone-laws-in-bangladesh/">https://uavcoach.com/drone-laws-in-bangladesh/</a>
+[https://uavcoach.com/drone-laws-in-bangladesh/](Bangladeshi Drone Laws)
 
-<a href="https://uavcoach.com/drone-laws-in-china/">https://uavcoach.com/drone-laws-in-china/</a>
+[https://uavcoach.com/drone-laws-in-china/](Chinese Drone Laws)
 
-[/fusion_text][/fusion_builder_column][/fusion_builder_row][/fusion_builder_container]
