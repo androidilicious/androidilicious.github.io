@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Are dones in Bhutan just for the rich and connected?
+title: Are drones in Bhutan just for the rich and connected?
 published: true
 tags: drone bhutan laws regulations strict uas aircraft pilot remote
 ---
