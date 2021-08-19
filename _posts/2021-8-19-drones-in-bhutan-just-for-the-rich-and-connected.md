@@ -21,15 +21,15 @@ Once you are done with the registration, comes the fateful day of flying your be
 
 If you are one of those lucky enough to get the necessary clearances from these institutions, welcome to the next level where you have to prove your competence and talent in piloting these flying objects. If you are one of those that recently purchased a drone to just fly as a hobby or film some awesome shots for your YouTube, you are out of luck because it is impossible for you to obtain 'documentary evidence' to prove to the relevant agencies that you can indeed fly. So Good Luck!
 
-You can find similar limitations (https://www.tourism.gov.bt/uploads/attachment_files/x3Yt_tcb_042916_notice.pdf)[here] in the notification published by BCAA which is a slap in the face telling you to not fly.
+You can find similar limitations [here](https://www.tourism.gov.bt/uploads/attachment_files/x3Yt_tcb_042916_notice.pdf) in the notification published by BCAA which is a slap in the face telling you to not fly.
 
 For the record, all of our neighboring countries have sane drone laws as can be referenced below. Ours is the only absurd one.
 
-[https://uavcoach.com/drone-laws-in-india/](Indian Drone Laws)
+[Indian Drone Laws](https://uavcoach.com/drone-laws-in-india/)
 
-[https://uavcoach.com/drone-laws-in-nepal/](Nepali Drone Laws)
+[Nepali Drone Laws](https://uavcoach.com/drone-laws-in-nepal/)
 
-[https://uavcoach.com/drone-laws-in-bangladesh/](Bangladeshi Drone Laws)
+[Bangladeshi Drone Laws](https://uavcoach.com/drone-laws-in-bangladesh/)
 
-[https://uavcoach.com/drone-laws-in-china/](Chinese Drone Laws)
+[Chinese Drone Laws](https://uavcoach.com/drone-laws-in-china/)
 
