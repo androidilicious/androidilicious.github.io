@@ -2,6 +2,7 @@
 layout: post
 title: Bank for your Buck
 published: true
+author: diwaspuri
 tags: diwas puri bhutan bank buck 4 interest investment rma bnb bob tbank dpnb bdb technology digital transformation
 ---
 
