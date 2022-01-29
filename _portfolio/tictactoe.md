@@ -4,6 +4,8 @@ title: Tic tac toe
 feature-img: "assets/img/portfolio/ttt.png"
 img: "assets/img/portfolio/ttt.png"
 date: September 2014
+hide: true
+
 ---
 
 Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, 

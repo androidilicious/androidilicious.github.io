@@ -12,7 +12,7 @@
   "content"  : {{ post.content | strip_html | escape | jsonify }}
 } {% unless forloop.last %},{% endunless %}
   {% endfor %}
-  {% if site.portfolio.size > 0 %},{% endif %}
+  {% comment %} {% if site.portfolio.size > 0 %},{% endif %}
   {% for page in site.portfolio %}
   {
   {% if page.title != nil %}
@@ -25,5 +25,5 @@
   "content"  : {{ page.content | strip_html | escape | jsonify }}
   {% endif %}
 } {% unless forloop.last %},{% endunless %}
-  {% endfor %}
+  {% endfor %} {% endcomment %}
 ]

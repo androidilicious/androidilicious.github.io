@@ -4,6 +4,8 @@ title: Github
 img: "assets/img/portfolio/github.png"
 date: 20-10-2017
 tags: [Lorem]
+hide: true
+
 ---
 
 ![image]({{ page.img | relative_url }})

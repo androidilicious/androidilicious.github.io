@@ -16,8 +16,10 @@ layout: page
     <!-- cycles through portfolio collection to get tags -->
     {% assign portfolio = site.portfolio | map: 'tags' | join: ',' | split: ',' | uniq %}
     {% for tag in portfolio %}
+    {% if !portfolio.hide %}
     {% assign portfolio_tags = tag | join: '|' | append: '|' %}
     {% assign rawtags = rawtags | append: portfolio_tags %}
+    {% endif %}
     {% endfor %}
 
     <!-- cycles through pages to get tags -->

@@ -4,6 +4,8 @@ title: Lorem Ipsum
 feature-img: "assets/img/portfolio/submarine.png"
 img: "assets/img/portfolio/submarine.png"
 date: 2017-09-03
+hide: true
+
 ---
 
 Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, 
