@@ -2,7 +2,6 @@
 layout: post
 title: How this lockdown could have been shorter!
 published: true
-author: diwaspuri
 tags: diwas puri lockdown story long bhutan thimphu coronavirus covid
 ---
 

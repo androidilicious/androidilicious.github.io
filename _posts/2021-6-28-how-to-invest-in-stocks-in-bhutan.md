@@ -2,7 +2,6 @@
 layout: post
 title: How do you invest in stocks in Bhutan?
 published: true
-author: diwaspuri
 tags: diwas puri bhutan stocks trade shares bnb securities ipo market buy sell rseb
 ---
 

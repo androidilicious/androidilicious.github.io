@@ -2,7 +2,6 @@
 layout: post
 title: How do banks calculate their credit/loan interest rates?
 published: true
-author: diwaspuri
 tags: diwas puri bhutan bank credit loan interest rates mlr rma bob bnb dpnb tbank bdb
 ---
 

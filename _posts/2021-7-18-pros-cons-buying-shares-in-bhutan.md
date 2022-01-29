@@ -2,7 +2,6 @@
 layout: post
 title: What would you lose when buying shares?
 published: true
-author: diwaspuri
 tags: stock price bhutan bnb securities shares buy sell royal national bank
 ---
 
