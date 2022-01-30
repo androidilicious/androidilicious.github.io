@@ -16,16 +16,16 @@ When I first began practicing web programming, I was naturally drawn to the easi
 
 When I first stumbled across [GitHub Pages](https://pages.github.com/), it occured to me that a free service like this would not only be a money saving but also a learning opportunity. GitHub pages however are only good for static websites and can't handle extensive backend operations, but they're great for a blogs like this.
 
-###How to create a GitHub page?
+### How to create a GitHub page?
 
 In order to create a GitHub page, you first need an account with the service. Then just create a GitHub repository and name it as `<anyname>.github.io`. After that, add static files to the repository after which you will be good to go.
 
 You can also use one of several [Jekyll](https://jekyllthemes.io/) themes if you don't want to waste time developing a website that looks nice. You'll just need to push one of the themes to the repository after making any necessary changes.
 
-###Have a domain name?
+### Have a domain name?
 
 If you have purchased a domain name and want to use it instead of the standard `<anyname>.github.io`, simply go to the dashboard of the service where you bought your domain and point it to the GitHub servers as described in [this](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) page. You will also need to add a CNAME file in your GitHub repository for your name servers to be able to recognize it.
 
-###Final Thoughts
+### Final Thoughts
 
 If you're a casual blogger or enjoy tinkering with things on the internet, GitHub pages may be of interest to you because they're simple to set up and load quickly for end users. For this reason, I utilize this service to power my site, and you might want to do the same.
