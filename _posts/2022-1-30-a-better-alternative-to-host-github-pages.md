@@ -8,7 +8,7 @@ thumbnail: "assets/img/thumbnails/feature-img/desk-messy.jpeg"
 tags: github pages blog website domain dns nameserver arvixe
 ---
 
-I've been dabbling with blogging for quite some time now, and I must warn you that I'm not very good at it. I believe I am more interested in the technological side of things since I enjoy experimenting with different platforms to see which is the ideal website to host something where I can post my thoughts for everybody to see on the internet. Throughout the process, I've come to learn that paying for hosting for a simple landing page or blog is a waste of money.
+I've been dabbling with blogging for quite some time now, and I must warn you that I'm not very good at it. I think I am more interested in the technological side of things since I enjoy experimenting with different platforms. This has allowed me to identify an ideal solution to host my blog. Throughout this process, I've come to learn that paying for hosting for a simple landing page or blog is a waste of money.
 
 It's crucial to realize for the uninitiated that all websites have numerous layers of intricate things going on behind the scenes to deliver the contents to the screen. This includes the domain name, which in my case is www.diwaspuri.com, as well as the server that hosts the content that appears when www.diwaspuri.com is accessed. Not to mention the thousands of kilometers of fiber cables that travel beneath the oceans floor to the mobile phone towers that beam the internet to your phones. However, in this scenario, remember just two things: the domain name and the computer/server that has the files that are referenced when the domain is used.
 
