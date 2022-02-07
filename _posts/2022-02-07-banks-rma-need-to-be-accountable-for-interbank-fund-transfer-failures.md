@@ -3,6 +3,7 @@ layout: post
 title: The curious case of the lost interest income during inter bank fund transfer failures
 published: true
 author: diwaspuri
+color: lightblue
 tags: RMA bank interbank fund transfer mpay mbob
 ---
 
