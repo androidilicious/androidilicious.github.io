@@ -20,8 +20,8 @@ sequenceDiagram
 
 For instance, when a BNB customer inserts the details in MPay to transfer funds to a BOB account, the money initially gets debited from his/her account at BNB. After that, RMA's Bhutan Financial Switch (BFS) receives the request to process the transfer to BOB. If the account information given by the customer is valid, the BFS routes the amount to the corresponding BOB account. The success of these steps, more often than not, relies in two things;
 
-	1. The availability of the RMA's BFS switch that handles the routing of the transaction
-	2. The availability of the receiving bank's IT systems
+1. The availability of the RMA's BFS switch that handles the routing of the transaction
+2. The availability of the receiving bank's IT systems
 
 Transactions will be halted if any of these companies fails to guarantee that their systems are operationally sound. This means that, using simple combinatorial mathematics, there are six possible ways for the transactions to fail. 
 
