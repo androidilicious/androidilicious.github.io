@@ -6,8 +6,6 @@ author: diwaspuri
 tags: RMA bank interbank fund transfer mpay mbob
 ---
 
-## Introduction
-
 The recent news about the two telecommunications companies being penalized for poor service is encouraging. Those who fail to deliver on their promises must be held accountable. Similarly, other Bhutanese organizations must also be held accountable for failing to satisfy the standards that they promise to its customers. Banks have one of the most pressing requirements for accountability reform. More precisely, the parties facilitating in interbank financial transfers, including remitting, receiving and the central bank.
 
 ## How does interbank fund transfer work?
