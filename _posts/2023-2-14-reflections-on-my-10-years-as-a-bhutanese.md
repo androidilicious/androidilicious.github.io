@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'The Royal Blessing : a Decade of Gratitude & Transformation'
+title: 'The Royal Blessing - a Decade of Gratitude & Transformation'
 published: true
 author: diwaspuri
 color: yellow
