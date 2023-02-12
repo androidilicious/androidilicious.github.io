@@ -3,7 +3,7 @@ layout: post
 title: 'The Royal Blessing - a Decade of Gratitude & Transformation'
 published: true
 author: diwaspuri
-color: yellow
+color: gold
 tags: king bhutan reflections gratitude thank you
 ---
 
