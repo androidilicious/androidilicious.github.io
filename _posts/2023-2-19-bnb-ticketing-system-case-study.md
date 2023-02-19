@@ -3,7 +3,7 @@ layout: post
 title: 'Enhancing Efficiency with Open-Source Ticketing System: A Case Study'
 published: true
 author: diwaspuri
-color: blue
+color: cornflowerblue
 tags: bnb case study zammad ticketing system
 ---
 
