@@ -10,7 +10,7 @@ favicon: assets/favicon.png                             # Icon displayed in the 
 
 # Header and footer text
 header_text: Personal Blog  # Change Blog header text
-header_feature_image: assets/img/pexels/header.jpeg
+header_feature_image: assets/img/pexels/card.jpeg
 footer_text: >
   Powered by <a href="https://jekyllrb.com/">Jekyll</a> | www.diwaspuri.com
 
