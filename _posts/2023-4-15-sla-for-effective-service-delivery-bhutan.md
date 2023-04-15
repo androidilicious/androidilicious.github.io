@@ -7,8 +7,6 @@ color: seagreen
 tags: service level agreement bhutan delivery water thromde
 ---
 
-## Introduction
-
 Service Level Agreements (SLAs) are formal contracts between service providers and clients that spell out the standards that the service must meet. By putting in place strict SLAs and punishing disruptions, institutions can make sure that services are delivered on time and reliably. In Bhutan, the need for these kinds of agreements is becoming more and more clear, especially in public service areas like water supply.
 
 ## Thimphu's Water Crisis
