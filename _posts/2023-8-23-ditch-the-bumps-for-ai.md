@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Ditch the bumps for AI
+title: Flatten the Bumps with Chips
 published: true
 author: diwaspuri
 tags: expressway babesa ai bumps speed optical recognition
