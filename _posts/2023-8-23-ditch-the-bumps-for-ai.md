@@ -6,8 +6,6 @@ author: diwaspuri
 tags: expressway babesa ai bumps speed optical recognition
 ---
 
-## **Introduction**
-
 The stretch of expressway that starts from Thimphu Welcome Gate in Babesa and ends at the Lungtenzampa bridge is currently laden with 8 speed bumps. While they were originally intended to control accidents on the newly inaugurated high-speed lane, there are now better ways to ensure the safety of drivers and pedestrians while also saving costs in terms of fuel and government expenditure. 
 
 ## **Experiment**
