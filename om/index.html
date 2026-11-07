@@ -21,61 +21,79 @@
   .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .grow { flex:1; }
   ul { list-style:none; padding:0; margin:10px 0 0; }
-  li { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
-  li button { padding:6px 10px; font-size:13px; }
+  li { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-top:1px solid var(--line); font-size:14px; }
+  li button { padding:5px 10px; font-size:13px; }
   .status { font-size:14px; margin-top:10px; min-height:20px; }
   .status.err { color:#ff8a7a; } .status.good { color:var(--ok); }
+  .big { font-size:28px; font-weight:700; font-variant-numeric:tabular-nums; }
   .mala { position:relative; width:260px; height:260px; margin:4px auto 10px; }
   .mala svg { width:100%; height:100%; }
   .count { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .count b { font-size:64px; line-height:1; font-variant-numeric:tabular-nums; }
   .count span { color:var(--mute); font-size:13px; margin-top:6px; }
-  .meter { height:10px; background:#3b241c; border-radius:6px; position:relative; overflow:hidden; margin:6px 0 2px; }
-  .meter i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--saffron); transition:width .08s; }
-  .meter u { position:absolute; top:0; bottom:0; width:2px; background:#fff; left:83%; }
+  .bar { height:10px; background:#3b241c; border-radius:6px; position:relative; overflow:hidden; margin:6px 0 2px; }
+  .bar i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--saffron); transition:width .08s; }
   .small { font-size:13px; color:var(--mute); }
   input[type=range] { width:100%; accent-color:var(--saffron); }
   label.chk { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--mute); }
   .flash { animation:flash .35s; }
   @keyframes flash { from { transform:scale(1.15); color:var(--saffron); } to { transform:scale(1); } }
+  .check { font-size:14px; margin-top:8px; min-height:20px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Om Mani Padme Hum Counter</h1>
-  <p class="sub">Teach it your chant, then let it count. Everything runs on this device; no audio leaves it.</p>
+  <p class="sub">Trains a small neural network on your own voice. Recordings, training and the model all stay on this device.</p>
 
-  <section class="card" id="trainCard">
-    <h2>1 · Train</h2>
-    <p class="hint">Record 3 samples. For each: tap Record, wait a second, chant <b>one</b> full "Om Mani Padme Hum" at your normal pace, wait a second, tap Stop.</p>
+  <section class="card">
+    <h2>1 · Record your chants</h2>
+    <p class="hint">Tap Record and chant the full mantra 10–15 times, with a short pause (about half a second) between each. Do this once or twice to collect 20 or more.</p>
     <div class="row">
-      <button class="primary grow" id="recBtn">Record sample</button>
-      <button id="clearBtn">Clear all</button>
+      <button class="primary grow" id="posBtn">Record chants</button>
+      <div style="text-align:right"><div class="big" id="posCount">0</div><div class="small">chants</div></div>
     </div>
-    <ul id="sampleList"></ul>
-    <div class="status" id="trainStatus"></div>
+    <ul id="posList"></ul>
+    <div class="status" id="posStatus"></div>
   </section>
 
   <section class="card">
-    <h2>2 · Count</h2>
+    <h2>2 · Record other sounds</h2>
+    <p class="hint">Record 30–60 seconds of things that should <b>not</b> count: normal talking, "Om" on its own, half the mantra, other prayers, background noise.</p>
+    <div class="row">
+      <button class="primary grow" id="othBtn">Record other sounds</button>
+      <div style="text-align:right"><div class="big" id="othSecs">0s</div><div class="small">recorded</div></div>
+    </div>
+    <ul id="othList"></ul>
+    <div class="status" id="othStatus"></div>
+  </section>
+
+  <section class="card">
+    <h2>3 · Train the model</h2>
+    <p class="hint">Trains a small neural network (about 5,000 weights) here on your phone, then saves it on this device.</p>
+    <div class="row"><button class="primary grow" id="trainBtn" disabled>Train model</button></div>
+    <div class="bar" style="margin-top:12px"><i id="trainBar"></i></div>
+    <div class="status" id="trainStatus"></div>
+    <div class="row" style="margin-top:8px"><button id="dlBtn" disabled>Download model files</button><button id="wipeBtn">Delete all data</button></div>
+  </section>
+
+  <section class="card">
+    <h2>4 · Count</h2>
     <div class="mala">
       <svg viewBox="0 0 260 260" id="malaSvg"></svg>
       <div class="count"><b id="countNum">0</b><span id="roundTxt">mala rounds: 0</span></div>
     </div>
     <div class="row">
       <button class="primary grow" id="listenBtn" disabled>Start counting</button>
-      <button id="minusBtn" title="Remove one">−1</button>
-      <button id="plusBtn" title="Add one">+1</button>
+      <button id="minusBtn">−1</button>
+      <button id="plusBtn">+1</button>
       <button id="resetBtn">Reset</button>
     </div>
-    <div style="margin-top:14px">
-      <div class="small">Match strength (counts when it crosses the white line)</div>
-      <div class="meter"><i id="meterBar"></i><u></u></div>
-    </div>
+    <div class="check" id="lastCheck"></div>
     <div style="margin-top:12px">
-      <div class="row small"><span class="grow">Sensitivity</span><span id="sensVal">1.00</span></div>
-      <input type="range" id="sens" min="0.6" max="1.8" step="0.05" value="1">
-      <div class="small">Raise it if full chants are missed; lower it if it counts things that aren't the full mantra. Quick check: say just "Om" — it should not count.</div>
+      <div class="row small"><span class="grow">Strictness (how sure the model must be)</span><span id="strictVal">60%</span></div>
+      <input type="range" id="strict" min="0.3" max="0.95" step="0.05" value="0.6">
+      <div class="small">Lower it if full chants are missed; raise it if other sounds get counted.</div>
     </div>
     <div class="row" style="margin-top:12px; gap:18px">
       <label class="chk"><input type="checkbox" id="vibChk" checked> Vibrate on count</label>
@@ -84,9 +102,10 @@
     <div class="status" id="listenStatus"></div>
   </section>
 
-  <p class="small">How it works: each sample is turned into a sequence of MFCC voice features. While listening, the app slides your live audio against those sequences with dynamic time warping, so faster or slower chanting still matches. A full match adds one to the count.</p>
+  <p class="small">How it works: a fast pattern matcher (dynamic time warping) spots anything that might be a chant. Each candidate is passed to the neural network, a 1-D convolutional network over your voice's spectrogram, which only counts it if it's the full mantra in the right order. Besides your recordings, the network learns from partial and scrambled versions of your own chants.</p>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 <script>
 // Mantra counter engine: MFCC features + streaming subsequence DTW template matching.
 const Engine = (() => {
@@ -120,7 +139,19 @@ const Engine = (() => {
     };
   }
 
-  function FeatureExtractor(sampleRate, N = 2048, nMel = 26, nCep = 12, fmin = 60, fmax = 4000) {
+  const N_MEL = 26, N_CEP = 12, DCT = [];
+  for (let k = 1; k <= N_CEP; k++) {
+    const row = new Float64Array(N_MEL);
+    for (let m = 0; m < N_MEL; m++) row[m] = Math.cos(Math.PI * k * (m + 0.5) / N_MEL) * Math.sqrt(2 / N_MEL);
+    DCT.push(row);
+  }
+  function melToCep(mel) {
+    const cep = new Float32Array(N_CEP);
+    for (let k = 0; k < N_CEP; k++) { let s = 0; const row = DCT[k]; for (let m = 0; m < N_MEL; m++) s += row[m] * mel[m]; cep[k] = s; }
+    return cep;
+  }
+
+  function FeatureExtractor(sampleRate, N = 2048, nMel = N_MEL, nCep = N_CEP, fmin = 60, fmax = 4000) {
     const fft = makeFFT(N);
     const win = new Float64Array(N);
     for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
@@ -143,12 +174,6 @@ const Engine = (() => {
       }
       filters.push({ start, w });
     }
-    const dct = [];
-    for (let k = 1; k <= nCep; k++) {
-      const row = new Float64Array(nMel);
-      for (let m = 0; m < nMel; m++) row[m] = Math.cos(Math.PI * k * (m + 0.5) / nMel) * Math.sqrt(2 / nMel);
-      dct.push(row);
-    }
     const logmel = new Float64Array(nMel);
     return {
       N, nCep,
@@ -161,9 +186,8 @@ const Engine = (() => {
           for (let j = 0; j < f.w.length; j++) { const k = f.start + j; s += f.w[j] * (re[k] * re[k] + im[k] * im[k]); }
           logmel[m] = Math.log(s + 1e-10);
         }
-        const cep = new Float32Array(nCep);
-        for (let k = 0; k < nCep; k++) { let s = 0; const row = dct[k]; for (let m = 0; m < nMel; m++) s += row[m] * logmel[m]; cep[k] = s; }
-        return { cep, db: 10 * Math.log10(e / N + 1e-12) };
+        const mel = Float32Array.from(logmel);
+        return { cep: melToCep(mel), mel, db: 10 * Math.log10(e / N + 1e-12) };
       }
     };
   }
@@ -197,7 +221,7 @@ const Engine = (() => {
     }
     step(cep, voiced, silPen, thr) {
       const t = this.t++;
-      let best = Infinity;
+      let best = Infinity, bestStart = -1;
       for (let ti = 0; ti < this.T.length; ti++) {
         const seq = this.T[ti].seq, s = this.st[ti], M = s.M, seg = s.seg;
         const p = s.a, n = s.b;
@@ -230,12 +254,12 @@ const Engine = (() => {
             const c = n.N[e * K + k]; if (!c) { worst = Infinity; break; }
             const v = n.Q[e * K + k] / c; if (v > worst) worst = v;
           }
-          if (worst < best) best = worst;
+          if (worst < best) { best = worst; bestStart = n.S[e]; }
         }
       }
-      let fired = false;
-      if (best < thr && (!this.cand || best < this.cand.score)) this.cand = { score: best, t };
-      if (this.cand && t - this.cand.t >= 4) { fired = true; this.cutoff = this.cand.t; this.cand = null; }
+      let fired = null;
+      if (best < thr && (!this.cand || best < this.cand.score)) this.cand = { score: best, t, start: bestStart };
+      if (this.cand && t - this.cand.t >= 4) { fired = this.cand; this.cutoff = this.cand.t; this.cand = null; }
       return { score: best, fired };
     }
   }
@@ -310,31 +334,240 @@ const Engine = (() => {
     };
   }
 
-  return { FeatureExtractor, train, Counter };
+  return { FeatureExtractor, melToCep, train, Counter };
 })();
 if (typeof module !== "undefined") module.exports = Engine;
 
 </script>
 <script>
+// On-device neural verifier for the mantra counter. Needs global `tf` (TensorFlow.js) and `Engine`.
+const NN = (() => {
+  const T = 32, F = 26;           // network input: 32 time steps x 26 mel bands
+  const PAD = 15;                 // frames of context kept around each recorded chant
+
+  function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+  function pct(a, p) { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.max(0, Math.floor(p * (b.length - 1))))]; }
+
+  function gateOf(frames) {
+    const dbs = frames.map(f => f.db).filter(d => d > -100);
+    if (dbs.length < 20) return null;
+    const floor = pct(dbs, 0.1), peak = pct(dbs, 0.95);
+    if (peak - floor < 8) return null;
+    return Math.max(floor + 6, floor + 0.35 * (peak - floor));
+  }
+
+  // Split a recording into voiced segments separated by pauses.
+  function segment(frames, gate, minGap = 14, minLen = 25) {
+    const segs = []; let a = -1, lastV = -1e9;
+    for (let i = 0; i < frames.length; i++) {
+      if (frames[i].db >= gate) {
+        if (a < 0) a = i; else if (i - lastV > minGap) { segs.push([a, lastV]); a = i; }
+        lastV = i;
+      }
+    }
+    if (a >= 0) segs.push([a, lastV]);
+    return segs.filter(([s, e]) => e - s + 1 >= minLen);
+  }
+
+  // Cut chants out of a chanting session. Returns [{frames, a, b}] with a..b the chant inside padded frames.
+  function chantsFromSession(frames) {
+    const gate = gateOf(frames);
+    if (gate === null) return { error: "Couldn't hear clear chanting. Chant a little louder, with a short pause between each one." };
+    let segs = segment(frames, gate);
+    if (!segs.length) return { error: "No chants found. Leave a short pause (about half a second) between chants." };
+    const med = pct(segs.map(([a, b]) => b - a + 1), 0.5);
+    segs = segs.filter(([a, b]) => { const L = b - a + 1; return L >= 0.55 * med && L <= 1.8 * med; });
+    return {
+      chants: segs.map(([a, b]) => {
+        const s = Math.max(0, a - PAD), e = Math.min(frames.length - 1, b + PAD);
+        return { frames: frames.slice(s, e + 1), a: a - s, b: b - s };
+      }), skipped: 0
+    };
+  }
+
+  // Resample mel frames [a, b] (fractional ok) to T steps and standardize.
+  function toInput(mels, a, b, out, off) {
+    const x = out || new Float32Array(T * F), o = off || 0;
+    const len = Math.max(1, b - a);
+    for (let t = 0; t < T; t++) {
+      const pos = a + len * t / (T - 1);
+      const i0 = Math.max(0, Math.min(mels.length - 1, Math.floor(pos))), i1 = Math.min(mels.length - 1, i0 + 1), w = pos - Math.floor(pos);
+      for (let f = 0; f < F; f++) x[o + t * F + f] = mels[i0][f] * (1 - w) + mels[i1][f] * w;
+    }
+    let m = 0, v = 0;
+    for (let i = 0; i < T * F; i++) m += x[o + i];
+    m /= T * F;
+    for (let i = 0; i < T * F; i++) { const d = x[o + i] - m; v += d * d; }
+    const sd = Math.sqrt(v / (T * F)) + 1e-6;
+    for (let i = 0; i < T * F; i++) x[o + i] = (x[o + i] - m) / sd;
+    return x;
+  }
+  function concatMels(parts) { const r = []; for (const p of parts) for (const m of p) r.push(m); return r; }
+
+  // Build training examples. pos: chants; other: recordings of non-mantra sounds.
+  function buildDataset(pos, other, seed = 1) {
+    const R = rng(seed), X = [], Y = [];
+    const add = (mels, a, b, y) => { X.push(toInput(mels, a, b)); Y.push(y); };
+    const jitter = (L, f) => (R() * 2 - 1) * f * L;
+    let avgLen = 0;
+    for (const c of pos) {
+      const mels = c.frames.map(f => f.mel), L = c.b - c.a;
+      avgLen += L / pos.length;
+      // positives: the chant with boundaries nudged the way live detection nudges them
+      add(mels, c.a, c.b, 1);
+      for (let k = 0; k < 7; k++) add(mels, Math.max(0, c.a + jitter(L, 0.08)), Math.min(mels.length - 1, c.b + jitter(L, 0.08)), 1);
+      // hard negatives from the user's own voice: partial chants and scrambled order
+      const ch = [0, 1, 2, 3, 4].map(k => c.a + Math.round(k * L / 4));
+      const piece = k => mels.slice(ch[k], ch[k + 1] + 1);
+      add(mels, c.a, c.a + 0.3 * L, 0);
+      add(mels, c.a, c.a + 0.55 * L, 0);
+      add(mels, c.a, c.a + 0.75 * L, 0);
+      add(mels, c.a + 0.4 * L, c.b, 0);
+      const orders = [[0, 2, 1, 3], [0, 3, 2, 1], [0, 1, 3, 2], [0, 0, 0, 0], [0, 0, 1, 1], [3, 2, 1, 0]];
+      for (const o of orders) { const m2 = concatMels(o.map(piece)); add(m2, 0, m2.length - 1, 0); }
+    }
+    // negatives from other sounds: every voiced stretch, plus random windows of chant length
+    for (const rec of other) {
+      const mels = rec.map(f => f.mel), gate = gateOf(rec);
+      if (gate !== null) for (const [a, b] of segment(rec, gate, 14, 10)) {
+        add(mels, a, b, 0);
+        if (b - a > 1.4 * avgLen) for (let s = a; s + avgLen <= b; s += avgLen / 2) add(mels, s, s + avgLen, 0);
+      }
+      const n = Math.max(4, Math.round(mels.length / avgLen * 3));
+      for (let k = 0; k < n && mels.length > avgLen * 0.5; k++) {
+        const L = avgLen * (0.6 + 0.8 * R()), s = R() * Math.max(1, mels.length - L);
+        add(mels, s, Math.min(mels.length - 1, s + L), 0);
+      }
+    }
+    return { X, Y };
+  }
+
+  function makeModel() {
+    const m = tf.sequential();
+    // 1-D convolution over time; the 26 mel bands are the input channels
+    m.add(tf.layers.conv1d({ inputShape: [T, F], filters: 16, kernelSize: 5, padding: "same", activation: "relu" }));
+    m.add(tf.layers.maxPooling1d({ poolSize: 2 }));
+    m.add(tf.layers.conv1d({ filters: 16, kernelSize: 3, padding: "same", activation: "relu" }));
+    m.add(tf.layers.maxPooling1d({ poolSize: 2 }));
+    m.add(tf.layers.flatten());      // keeps time order, so scrambled chants look different
+    m.add(tf.layers.dropout({ rate: 0.3 }));
+    m.add(tf.layers.dense({ units: 16, activation: "relu" }));
+    m.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
+    m.compile({ optimizer: tf.train.adam(0.003), loss: "binaryCrossentropy", metrics: ["accuracy"] });
+    return m;
+  }
+
+  function shuffle(a, R) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function tensorOf(X) { const buf = new Float32Array(X.length * T * F); X.forEach((x, i) => buf.set(x, i * T * F)); return tf.tensor3d(buf, [X.length, T, F]); }
+
+  // Full training: DTW templates + neural network. onProgress(epoch, epochs, logs)
+  async function trainAll(pos, other, onProgress, epochs = 20) {
+    if (pos.length < 8) return { error: "Need at least 8 chants (20 or more is better)." };
+    const R = rng(42);
+    // 1) DTW candidate finder from 3 chants closest to the median length
+    const lens = pos.map(c => c.b - c.a), med = pct(lens, 0.5);
+    const pick = pos.map((c, i) => [Math.abs(lens[i] - med), i]).sort((x, y) => x[0] - y[0]).slice(0, 3).map(p => pos[p[1]]);
+    const dtw = Engine.train(pick.map(c => ({ frames: c.frames })));
+    if (dtw.error) return dtw;
+    // 2) hold out ~20% of chants and other recordings for an honest accuracy check
+    const idx = shuffle(pos.map((_, i) => i), R), nVal = Math.max(2, Math.round(pos.length * 0.2));
+    const valPos = idx.slice(0, nVal).map(i => pos[i]), trPos = idx.slice(nVal).map(i => pos[i]);
+    const splitRec = rec => { const k = Math.floor(rec.length * 0.8); return [rec.slice(0, k), rec.slice(k)]; };
+    const trOther = [], valOther = [];
+    for (const r of other) { const [a, b] = splitRec(r); trOther.push(a); valOther.push(b); }
+    const tr = buildDataset(trPos, trOther, 1), va = buildDataset(valPos, valOther, 2);
+    const order = shuffle(tr.X.map((_, i) => i), R);
+    const xs = tensorOf(order.map(i => tr.X[i])), ys = tf.tensor2d(order.map(i => [tr.Y[i]]));
+    const n1 = tr.Y.filter(y => y === 1).length, n0 = tr.Y.length - n1;
+    const net = makeModel();
+    await net.fit(xs, ys, {
+      epochs, batchSize: 32, shuffle: true,
+      classWeight: { 0: tr.Y.length / (2 * n0), 1: tr.Y.length / (2 * n1) },
+      callbacks: { onEpochEnd: async (ep, logs) => { if (onProgress) onProgress(ep + 1, epochs, logs); await tf.nextFrame(); } }
+    });
+    xs.dispose(); ys.dispose();
+    // 3) validation on held-out data
+    const vx = tensorOf(va.X), vp = net.predict(vx), probs = await vp.data(); vx.dispose(); vp.dispose();
+    let tp = 0, fn = 0, tn = 0, fp = 0;
+    va.Y.forEach((y, i) => { const p = probs[i] >= 0.5; if (y) p ? tp++ : fn++; else p ? fp++ : tn++; });
+    const stats = { trainExamples: tr.Y.length, valExamples: va.Y.length, recall: tp / Math.max(1, tp + fn), falseAccept: fp / Math.max(1, fp + tn) };
+    return { dtw, net, stats };
+  }
+
+  // Live counting: DTW proposes a chant (loosely), the network confirms it.
+  function Live(dtw, net, looseness = 1.5) {
+    const counter = Engine.Counter(dtw);
+    const ring = [], RING = 800; let t0 = 0;    // mel history, absolute index of ring[0]
+    return {
+      push(f, strictness = 0.6) {
+        ring.push(f.mel); if (ring.length > RING) { ring.shift(); t0++; }
+        const r = counter.push(f, looseness);
+        let p = null, counted = false;
+        if (r.fired && r.fired.start >= t0) {
+          const x = toInput(ring, r.fired.start - t0, r.fired.t - t0);
+          p = tf.tidy(() => net.predict(tf.tensor3d(x, [1, T, F])).dataSync()[0]);
+          counted = p >= strictness;
+        }
+        return { score: r.score, thr: dtw.thr * looseness, p, counted };
+      }
+    };
+  }
+
+  async function save(net, dtw) {
+    await net.save("indexeddb://om-verifier");
+    const d = { ...dtw, templates: dtw.templates.map(t => ({ seq: t.seq.map(a => Array.from(a)), mean: Array.from(t.mean) })), initMean: Array.from(dtw.initMean) };
+    localStorage.setItem("om-dtw", JSON.stringify(d));
+  }
+  async function load() {
+    const d = JSON.parse(localStorage.getItem("om-dtw") || "null");
+    if (!d) return null;
+    const net = await tf.loadLayersModel("indexeddb://om-verifier");
+    d.templates = d.templates.map(t => ({ seq: t.seq.map(a => Float32Array.from(a)), mean: Float64Array.from(t.mean) }));
+    d.initMean = Float64Array.from(d.initMean);
+    return { net, dtw: d };
+  }
+
+  return { T, F, chantsFromSession, buildDataset, makeModel, trainAll, Live, save, load, toInput };
+})();
+if (typeof module !== "undefined") module.exports = NN;
+
+</script>
+<script>
 const $ = id => document.getElementById(id);
-const store = {
+const ls = {
   get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
-  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e) { return false; } },
+  del(k){ try { localStorage.removeItem(k); } catch(e) {} }
 };
+function setStatus(id, txt, cls) { const el = $(id); el.textContent = txt; el.className = "status" + (cls ? " " + cls : ""); }
 
-let ctx = null, extractor = null, ring = null, mode = "idle";
-let recFrames = [], samples = [], model = null, counter = null;
-let count = store.get("omcount") || 0;
-let sampleRate = null;
+let ctx = null, extractor = null, ring = null, mode = "idle", recFrames = [];
+let sampleRate = ls.get("om-sr");
+let pos = [], oth = [];       // pos: [{frames,a,b}], oth: [frames[]]
+let trained = null, live = null;
+let count = ls.get("omcount") || 0;
 
-// ---- mala ring ----
+// ---- storage (compact: [db, ...mel] rounded) ----
+const packF = fs => fs.map(f => [Math.round(f.db * 10) / 10, ...Array.from(f.mel, v => Math.round(v * 100) / 100)]);
+const unpackF = arr => arr.map(a => { const mel = Float32Array.from(a.slice(1)); return { db: a[0], mel, cep: Engine.melToCep(mel) }; });
+function saveData() {
+  const ok = ls.set("om-pos", pos.map(c => ({ a: c.a, b: c.b, f: packF(c.frames) }))) && ls.set("om-oth", oth.map(packF));
+  ls.set("om-sr", sampleRate);
+  if (!ok) setStatus("trainStatus", "This device's storage is full, so recordings won't be kept after you close the page. A trained model is still saved.", "err");
+}
+function loadData() {
+  const p = ls.get("om-pos"), o = ls.get("om-oth");
+  if (p) pos = p.map(c => ({ a: c.a, b: c.b, frames: unpackF(c.f) }));
+  if (o) oth = o.map(unpackF);
+}
+
+// ---- mala ----
 const svg = $("malaSvg"), beads = [];
 for (let i = 0; i < 108; i++) {
   const a = -Math.PI/2 + 2*Math.PI*i/108, r = 118;
   const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
   c.setAttribute("cx", 130 + r*Math.cos(a)); c.setAttribute("cy", 130 + r*Math.sin(a));
-  c.setAttribute("r", i === 0 ? 5 : 3.4); c.setAttribute("fill", "#4a2c22");
-  svg.appendChild(c); beads.push(c);
+  c.setAttribute("r", i === 0 ? 5 : 3.4); svg.appendChild(c); beads.push(c);
 }
 function renderCount(flash) {
   $("countNum").textContent = count;
@@ -342,7 +575,33 @@ function renderCount(flash) {
   const k = count % 108;
   beads.forEach((b,i) => b.setAttribute("fill", i < k ? "#f0a030" : (i === 0 ? "#b8322a" : "#4a2c22")));
   if (flash) { const n = $("countNum"); n.classList.remove("flash"); void n.offsetWidth; n.classList.add("flash"); }
-  store.set("omcount", count);
+  ls.set("omcount", count);
+}
+
+// ---- lists ----
+const fsec = n => (n * 1024 / (sampleRate || 48000));
+function renderLists() {
+  $("posCount").textContent = pos.length;
+  const groups = {}; pos.forEach((c, i) => { (groups[c.g || 0] = groups[c.g || 0] || []).push(i); });
+  const pl = $("posList"); pl.innerHTML = "";
+  if (pos.length) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${pos.length} chants · average ${(pos.reduce((s,c)=>s+c.b-c.a,0)/pos.length*1024/(sampleRate||48000)).toFixed(1)}s each</span>`;
+    const b = document.createElement("button"); b.textContent = "Delete all"; b.onclick = () => { pos = []; saveData(); renderLists(); };
+    li.appendChild(b); pl.appendChild(li);
+  }
+  const total = oth.reduce((s, r) => s + fsec(r.length), 0);
+  $("othSecs").textContent = Math.round(total) + "s";
+  const ol = $("othList"); ol.innerHTML = "";
+  oth.forEach((r, i) => {
+    const li = document.createElement("li"); li.innerHTML = `<span>Recording ${i+1} · ${Math.round(fsec(r.length))}s</span>`;
+    const b = document.createElement("button"); b.textContent = "Delete"; b.onclick = () => { oth.splice(i,1); saveData(); renderLists(); };
+    li.appendChild(b); ol.appendChild(li);
+  });
+  $("trainBtn").disabled = !(pos.length >= 8 && total >= 15);
+  if (pos.length < 8) setStatus("trainStatus", `Need at least 8 chants (have ${pos.length}) and 15 s of other sounds (have ${Math.round(total)} s).`);
+  else if (total < 15) setStatus("trainStatus", `Need at least 15 s of other sounds (have ${Math.round(total)} s).`);
+  else if (!trained) setStatus("trainStatus", "Ready to train." + (pos.length < 20 ? " More chants (20+) will make it more accurate." : ""));
 }
 
 // ---- audio ----
@@ -351,11 +610,11 @@ async function ensureAudio() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
     ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (sampleRate && sampleRate !== ctx.sampleRate && samples.length) {
-      samples = []; afterSamplesChanged();
-      setStatus("trainStatus", "Your mic setup changed since training, so the old samples were cleared. Please record them again.", "err");
+    if (sampleRate && sampleRate !== ctx.sampleRate && (pos.length || oth.length || trained)) {
+      pos = []; oth = []; trained = null; ls.del("om-dtw"); $("listenBtn").disabled = true;
+      setStatus("trainStatus", "Your microphone setup changed since training, so the old recordings and model were cleared. Please record again.", "err");
     }
-    sampleRate = ctx.sampleRate;
+    sampleRate = ctx.sampleRate; ls.set("om-sr", sampleRate);
     extractor = Engine.FeatureExtractor(sampleRate);
     ring = new Float32Array(2048);
     const src = ctx.createMediaStreamSource(stream);
@@ -363,88 +622,95 @@ async function ensureAudio() {
     const mute = ctx.createGain(); mute.gain.value = 0;
     src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
     proc.onaudioprocess = e => {
-      const x = e.inputBuffer.getChannelData(0);
-      ring.copyWithin(0, 1024); ring.set(x, 1024);
+      ring.copyWithin(0, 1024); ring.set(e.inputBuffer.getChannelData(0), 1024);
       if (mode === "idle") return;
       const f = extractor.frame(ring);
-      if (mode === "record") recFrames.push(f);
-      else if (mode === "listen" && counter) onFrame(f);
+      if (mode === "pos" || mode === "oth") recFrames.push(f);
+      else if (mode === "listen" && live) onFrame(f);
     };
+    renderLists();
     return true;
   } catch (err) {
-    const msg = "Microphone not available: " + (err && err.message ? err.message : err) + ". Allow mic access, and open this page in Chrome or Safari (not inside another app's preview).";
-    setStatus("trainStatus", msg, "err"); setStatus("listenStatus", msg, "err");
+    const msg = "Microphone not available: " + (err && err.message ? err.message : err) + ". Allow microphone access for this site in your browser settings.";
+    ["posStatus","othStatus","listenStatus"].forEach(id => setStatus(id, msg, "err"));
     return false;
   }
 }
-function setStatus(id, txt, cls) { const el = $(id); el.textContent = txt; el.className = "status" + (cls ? " " + cls : ""); }
+function stopAll() {
+  if (mode === "listen") { mode = "idle"; $("listenBtn").textContent = "Start counting"; setStatus("listenStatus", "Paused."); }
+}
+
+$("posBtn").onclick = async () => {
+  if (mode === "pos") {
+    mode = "idle"; $("posBtn").textContent = "Record chants"; $("posBtn").className = "primary grow";
+    const r = NN.chantsFromSession(recFrames); recFrames = [];
+    if (r.error) { setStatus("posStatus", r.error, "err"); return; }
+    pos.push(...r.chants); saveData(); renderLists();
+    setStatus("posStatus", `Found ${r.chants.length} chants in that recording.` + (r.chants.length < 5 ? " If that's fewer than you chanted, leave clearer pauses between chants." : ""), "good");
+    return;
+  }
+  if (mode !== "idle" && mode !== "listen") return;
+  if (!(await ensureAudio())) return;
+  stopAll(); recFrames = []; mode = "pos";
+  $("posBtn").textContent = "Stop"; $("posBtn").className = "rec grow";
+  setStatus("posStatus", "Recording… chant the full mantra, pausing briefly between each. Tap Stop when done.");
+};
+$("othBtn").onclick = async () => {
+  if (mode === "oth") {
+    mode = "idle"; $("othBtn").textContent = "Record other sounds"; $("othBtn").className = "primary grow";
+    if (recFrames.length < 100) { setStatus("othStatus", "That was too short. Record at least a few seconds.", "err"); recFrames = []; return; }
+    oth.push(recFrames); recFrames = []; saveData(); renderLists();
+    setStatus("othStatus", "Saved.", "good");
+    return;
+  }
+  if (mode !== "idle" && mode !== "listen") return;
+  if (!(await ensureAudio())) return;
+  stopAll(); recFrames = []; mode = "oth";
+  $("othBtn").textContent = "Stop"; $("othBtn").className = "rec grow";
+  setStatus("othStatus", "Recording… talk, say “Om” alone, say part of the mantra, other prayers. Tap Stop when done.");
+};
 
 // ---- training ----
-function serialize() { return { sr: sampleRate, samples: samples.map(s => ({ frames: s.frames.map(f => [f.db, ...Array.from(f.cep)]) })) }; }
-function loadSaved() {
-  const d = store.get("omsamples");
-  if (!d || !d.samples) return;
-  samples = d.samples.map(s => ({ frames: s.frames.map(a => ({ db: a[0], cep: Float32Array.from(a.slice(1)) })) }));
-  sampleRate = d.sr;
-}
-function renderSamples() {
-  const ul = $("sampleList"); ul.innerHTML = "";
-  samples.forEach((s, i) => {
-    const li = document.createElement("li");
-    const secs = (s.frames.length * 1024 / (sampleRate || 48000)).toFixed(1);
-    li.innerHTML = `<span>Sample ${i+1} · ${secs}s</span>`;
-    const b = document.createElement("button"); b.textContent = "Delete";
-    b.onclick = () => { samples.splice(i,1); afterSamplesChanged(); };
-    li.appendChild(b); ul.appendChild(li);
-  });
-}
-function afterSamplesChanged() {
-  store.set("omsamples", serialize());
-  renderSamples();
-  model = null; counter = null;
-  if (samples.length < 2) {
-    $("listenBtn").disabled = true;
-    setStatus("trainStatus", samples.length ? "1 sample recorded. Record at least one more (3 is best)." : "");
-    return;
+$("trainBtn").onclick = async () => {
+  stopAll();
+  $("trainBtn").disabled = true; $("listenBtn").disabled = true;
+  setStatus("trainStatus", "Training… keep this page open (" + tf.getBackend() + ").");
+  const t0 = performance.now();
+  try {
+    const r = await NN.trainAll(pos, oth, (ep, n, logs) => {
+      $("trainBar").style.width = (ep / n * 100) + "%";
+      setStatus("trainStatus", `Training… epoch ${ep}/${n} · accuracy ${(logs.acc * 100).toFixed(0)}%`);
+    });
+    if (r.error) { setStatus("trainStatus", r.error, "err"); $("trainBtn").disabled = false; return; }
+    if (trained && trained.net) trained.net.dispose();
+    trained = r;
+    try { await NN.save(r.net, r.dtw); } catch (e) { console.warn(e); }
+    const s = r.stats, secs = ((performance.now() - t0) / 1000).toFixed(0);
+    setStatus("trainStatus", `Trained in ${secs}s on ${s.trainExamples} examples and saved on this device. On held-out recordings it caught ${(s.recall*100).toFixed(0)}% of chants and wrongly accepted ${(s.falseAccept*100).toFixed(0)}% of other sounds.`, s.recall >= 0.8 && s.falseAccept <= 0.1 ? "good" : "err");
+    $("listenBtn").disabled = false; $("dlBtn").disabled = false;
+  } catch (e) {
+    setStatus("trainStatus", "Training failed: " + e.message, "err");
   }
-  const m = Engine.train(samples);
-  if (m.error) { setStatus("trainStatus", m.error, "err"); $("listenBtn").disabled = true; return; }
-  model = m;
-  $("listenBtn").disabled = false;
-  const avg = (m.lens.reduce((a,b)=>a+b,0)/m.lens.length*1024/(sampleRate||48000)).toFixed(1);
-  const sep = (m.negMin / m.posMax).toFixed(1);
-  if (!m.separated) {
-    setStatus("trainStatus", `Trained, but your samples look too different from each other to reliably reject other words. Delete the odd one out and record again at the same pace and pitch.`, "err");
-  } else {
-    setStatus("trainStatus", `Trained on ${m.templates.length} samples (about ${avg}s per chant). Real vs. fake chants are ${sep}x apart.` + (samples.length < 3 ? " A 3rd sample will make it more reliable." : " Ready to count."), "good");
-  }
-}
-$("recBtn").onclick = async () => {
-  if (mode === "record") {
-    mode = "idle"; $("recBtn").textContent = "Record sample"; $("recBtn").className = "primary grow";
-    if (recFrames.length < 30) { setStatus("trainStatus", "That was too short. Try again: one full chant with a pause before and after.", "err"); return; }
-    samples.push({ frames: recFrames }); recFrames = [];
-    afterSamplesChanged();
-    return;
-  }
-  if (!(await ensureAudio())) return;
-  if (mode === "listen") stopListening();
-  recFrames = []; mode = "record";
-  $("recBtn").textContent = "Stop"; $("recBtn").className = "rec grow";
-  setStatus("trainStatus", "Recording… wait a second, chant once, wait a second, then tap Stop.");
+  $("trainBtn").disabled = false;
 };
-$("clearBtn").onclick = () => { samples = []; afterSamplesChanged(); };
+$("dlBtn").onclick = async () => { if (trained) { try { await trained.net.save("downloads://om-verifier"); } catch(e) { setStatus("trainStatus", "Download failed: " + e.message, "err"); } } };
+$("wipeBtn").onclick = async () => {
+  stopAll(); pos = []; oth = []; trained = null; live = null;
+  ["om-pos","om-oth","om-dtw"].forEach(ls.del);
+  try { await tf.io.removeModel("indexeddb://om-verifier"); } catch(e) {}
+  $("listenBtn").disabled = true; $("dlBtn").disabled = true; $("trainBar").style.width = "0";
+  renderLists(); setStatus("trainStatus", "All recordings and the model were deleted.");
+};
 
 // ---- counting ----
-let lastMeter = 0;
 function onFrame(f) {
-  const sens = parseFloat($("sens").value);
-  const r = counter.push(f, sens);
-  const eff = model.thr * sens;
-  const v = isFinite(r.score) ? Math.min(1.2, eff / r.score) : 0;
-  const now = performance.now();
-  if (now - lastMeter > 60) { $("meterBar").style.width = (v/1.2*100) + "%"; lastMeter = now; }
-  if (r.fired) { count++; renderCount(true); feedback(); }
+  const r = live.push(f, parseFloat($("strict").value));
+  if (r.p !== null) {
+    const pc = Math.round(r.p * 100);
+    $("lastCheck").textContent = r.counted ? `✓ Counted (model: ${pc}% sure)` : `✗ Not counted (model: ${pc}% sure it was the mantra)`;
+    $("lastCheck").style.color = r.counted ? "var(--ok)" : "var(--mute)";
+  }
+  if (r.counted) { count++; renderCount(true); feedback(); }
 }
 function feedback() {
   if ($("vibChk").checked && navigator.vibrate) { try { navigator.vibrate(40); } catch(e) {} }
@@ -454,28 +720,30 @@ function feedback() {
     o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.13);
   }
 }
-function stopListening() {
-  mode = "idle"; $("listenBtn").textContent = "Start counting"; $("meterBar").style.width = "0";
-  setStatus("listenStatus", "Paused.");
-}
 $("listenBtn").onclick = async () => {
-  if (mode === "listen") { stopListening(); return; }
-  if (!model) return;
+  if (mode === "listen") { stopAll(); return; }
+  if (!trained || mode !== "idle") return;
   if (!(await ensureAudio())) return;
-  if (sampleRate && ctx.sampleRate !== sampleRate) {
-    setStatus("listenStatus", "Your mic's sample rate changed since training. Clear the samples and record them again.", "err"); return;
-  }
-  if (mode === "record") return;
-  counter = Engine.Counter(model);
-  mode = "listen"; $("listenBtn").textContent = "Pause";
+  if (!trained) return;
+  live = NN.Live(trained.dtw, trained.net);
+  mode = "listen"; $("listenBtn").textContent = "Pause"; $("lastCheck").textContent = "";
   setStatus("listenStatus", "Listening… chant at your own pace.");
 };
 $("plusBtn").onclick = () => { count++; renderCount(true); };
 $("minusBtn").onclick = () => { count = Math.max(0, count-1); renderCount(); };
 $("resetBtn").onclick = () => { count = 0; renderCount(); };
-$("sens").oninput = () => { $("sensVal").textContent = parseFloat($("sens").value).toFixed(2); };
+$("strict").oninput = () => { $("strictVal").textContent = Math.round(parseFloat($("strict").value) * 100) + "%"; };
 
-loadSaved(); renderCount(); if (samples.length) afterSamplesChanged();
+// ---- start ----
+(async () => {
+  renderCount(); loadData(); renderLists();
+  try { await tf.setBackend("webgl"); } catch(e) {}
+  try { await tf.ready(); } catch(e) { await tf.setBackend("cpu"); }
+  try {
+    const m = await NN.load();
+    if (m) { trained = m; $("listenBtn").disabled = false; $("dlBtn").disabled = false; setStatus("trainStatus", "A trained model is saved on this device. You can start counting, or retrain after adding recordings.", "good"); }
+  } catch (e) { /* no saved model */ }
+})();
 </script>
 </body>
 </html>
