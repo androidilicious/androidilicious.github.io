@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Om Mani Padme Hum Counter</title>
+<style>
+  :root { --bg:#1b0f0c; --card:#2a1813; --line:#4a2c22; --text:#f5e9dc; --mute:#c2a890; --saffron:#f0a030; --red:#b8322a; --ok:#6cc070; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  main { max-width:520px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:20px; margin:4px 0 2px; }
+  .sub { color:var(--mute); font-size:14px; margin:0 0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
+  h2 { font-size:15px; margin:0 0 8px; color:var(--saffron); text-transform:uppercase; letter-spacing:.06em; }
+  p.hint { color:var(--mute); font-size:14px; margin:0 0 12px; }
+  button { font:inherit; border:0; border-radius:10px; padding:12px 16px; cursor:pointer; background:#3b241c; color:var(--text); }
+  button.primary { background:var(--saffron); color:#2a1205; font-weight:600; }
+  button.rec { background:var(--red); color:#fff; font-weight:600; }
+  button:disabled { opacity:.4; cursor:default; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .grow { flex:1; }
+  ul { list-style:none; padding:0; margin:10px 0 0; }
+  li { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
+  li button { padding:6px 10px; font-size:13px; }
+  .status { font-size:14px; margin-top:10px; min-height:20px; }
+  .status.err { color:#ff8a7a; } .status.good { color:var(--ok); }
+  .mala { position:relative; width:260px; height:260px; margin:4px auto 10px; }
+  .mala svg { width:100%; height:100%; }
+  .count { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .count b { font-size:64px; line-height:1; font-variant-numeric:tabular-nums; }
+  .count span { color:var(--mute); font-size:13px; margin-top:6px; }
+  .meter { height:10px; background:#3b241c; border-radius:6px; position:relative; overflow:hidden; margin:6px 0 2px; }
+  .meter i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--saffron); transition:width .08s; }
+  .meter u { position:absolute; top:0; bottom:0; width:2px; background:#fff; left:83%; }
+  .small { font-size:13px; color:var(--mute); }
+  input[type=range] { width:100%; accent-color:var(--saffron); }
+  label.chk { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--mute); }
+  .flash { animation:flash .35s; }
+  @keyframes flash { from { transform:scale(1.15); color:var(--saffron); } to { transform:scale(1); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Om Mani Padme Hum Counter</h1>
+  <p class="sub">Teach it your chant, then let it count. Everything runs on this device; no audio leaves it.</p>
+
+  <section class="card" id="trainCard">
+    <h2>1 · Train</h2>
+    <p class="hint">Record 3 samples. For each: tap Record, wait a second, chant <b>one</b> full "Om Mani Padme Hum" at your normal pace, wait a second, tap Stop.</p>
+    <div class="row">
+      <button class="primary grow" id="recBtn">Record sample</button>
+      <button id="clearBtn">Clear all</button>
+    </div>
+    <ul id="sampleList"></ul>
+    <div class="status" id="trainStatus"></div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Count</h2>
+    <div class="mala">
+      <svg viewBox="0 0 260 260" id="malaSvg"></svg>
+      <div class="count"><b id="countNum">0</b><span id="roundTxt">mala rounds: 0</span></div>
+    </div>
+    <div class="row">
+      <button class="primary grow" id="listenBtn" disabled>Start counting</button>
+      <button id="minusBtn" title="Remove one">−1</button>
+      <button id="plusBtn" title="Add one">+1</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div style="margin-top:14px">
+      <div class="small">Match strength (counts when it crosses the white line)</div>
+      <div class="meter"><i id="meterBar"></i><u></u></div>
+    </div>
+    <div style="margin-top:12px">
+      <div class="row small"><span class="grow">Sensitivity</span><span id="sensVal">1.00</span></div>
+      <input type="range" id="sens" min="0.6" max="1.8" step="0.05" value="1">
+      <div class="small">Raise it if chants are missed; lower it if it counts things that aren't the mantra.</div>
+    </div>
+    <div class="row" style="margin-top:12px; gap:18px">
+      <label class="chk"><input type="checkbox" id="vibChk" checked> Vibrate on count</label>
+      <label class="chk"><input type="checkbox" id="beepChk"> Soft beep</label>
+    </div>
+    <div class="status" id="listenStatus"></div>
+  </section>
+
+  <p class="small">How it works: each sample is turned into a sequence of MFCC voice features. While listening, the app slides your live audio against those sequences with dynamic time warping, so faster or slower chanting still matches. A full match adds one to the count.</p>
+</main>
+
+<script>
+// Mantra counter engine: MFCC features + streaming subsequence DTW template matching.
+const Engine = (() => {
+  function makeFFT(n) {
+    const levels = Math.log2(n);
+    const rev = new Uint32Array(n);
+    for (let i = 0; i < n; i++) {
+      let r = 0, x = i;
+      for (let j = 0; j < levels; j++) { r = (r << 1) | (x & 1); x >>= 1; }
+      rev[i] = r;
+    }
+    const cs = new Float64Array(n / 2), sn = new Float64Array(n / 2);
+    for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(2 * Math.PI * i / n); sn[i] = Math.sin(2 * Math.PI * i / n); }
+    return function (re, im) {
+      for (let i = 0; i < n; i++) {
+        const j = rev[i];
+        if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+      }
+      for (let size = 2; size <= n; size <<= 1) {
+        const half = size >> 1, step = n / size;
+        for (let i = 0; i < n; i += size) {
+          for (let j = 0, k = 0; j < half; j++, k += step) {
+            const a = i + j, b = a + half;
+            const tre = re[b] * cs[k] + im[b] * sn[k];
+            const tim = -re[b] * sn[k] + im[b] * cs[k];
+            re[b] = re[a] - tre; im[b] = im[a] - tim;
+            re[a] += tre; im[a] += tim;
+          }
+        }
+      }
+    };
+  }
+
+  function FeatureExtractor(sampleRate, N = 2048, nMel = 26, nCep = 12, fmin = 60, fmax = 4000) {
+    const fft = makeFFT(N);
+    const win = new Float64Array(N);
+    for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
+    const re = new Float64Array(N), im = new Float64Array(N);
+    const mel = f => 2595 * Math.log10(1 + f / 700);
+    const imel = m => 700 * (Math.pow(10, m / 2595) - 1);
+    const mlo = mel(fmin), mhi = mel(Math.min(fmax, sampleRate / 2));
+    const pts = [];
+    for (let i = 0; i < nMel + 2; i++) pts.push(imel(mlo + (mhi - mlo) * i / (nMel + 1)) * N / sampleRate);
+    const filters = [];
+    for (let m = 0; m < nMel; m++) {
+      const l = pts[m], c = pts[m + 1], r = pts[m + 2];
+      const start = Math.max(1, Math.floor(l)), end = Math.min(N / 2, Math.ceil(r));
+      const w = [];
+      for (let k = start; k <= end; k++) {
+        let v = 0;
+        if (k >= l && k <= c) v = (k - l) / (c - l || 1);
+        else if (k > c && k <= r) v = (r - k) / (r - c || 1);
+        w.push(Math.max(0, v));
+      }
+      filters.push({ start, w });
+    }
+    const dct = [];
+    for (let k = 1; k <= nCep; k++) {
+      const row = new Float64Array(nMel);
+      for (let m = 0; m < nMel; m++) row[m] = Math.cos(Math.PI * k * (m + 0.5) / nMel) * Math.sqrt(2 / nMel);
+      dct.push(row);
+    }
+    const logmel = new Float64Array(nMel);
+    return {
+      N, nCep,
+      frame(x) {
+        let e = 0;
+        for (let i = 0; i < N; i++) { re[i] = x[i] * win[i]; im[i] = 0; e += x[i] * x[i]; }
+        fft(re, im);
+        for (let m = 0; m < nMel; m++) {
+          const f = filters[m]; let s = 0;
+          for (let j = 0; j < f.w.length; j++) { const k = f.start + j; s += f.w[j] * (re[k] * re[k] + im[k] * im[k]); }
+          logmel[m] = Math.log(s + 1e-10);
+        }
+        const cep = new Float32Array(nCep);
+        for (let k = 0; k < nCep; k++) { let s = 0; const row = dct[k]; for (let m = 0; m < nMel; m++) s += row[m] * logmel[m]; cep[k] = s; }
+        return { cep, db: 10 * Math.log10(e / N + 1e-12) };
+      }
+    };
+  }
+
+  function pct(arr, p) { const a = [...arr].sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * (a.length - 1))))]; }
+
+  function meanCep(frames, gate) {
+    const n = frames[0].cep.length, m = new Float64Array(n); let c = 0;
+    for (const f of frames) if (f.db >= gate) { for (let k = 0; k < n; k++) m[k] += f.cep[k]; c++; }
+    if (c) for (let k = 0; k < n; k++) m[k] /= c;
+    return m;
+  }
+
+  function dist(a, b) { let s = 0; for (let k = 0; k < a.length; k++) { const d = a[k] - b[k]; s += d * d; } return Math.sqrt(s / a.length); }
+
+  // Streaming subsequence DTW against several templates.
+  class Matcher {
+    constructor(templates) {
+      this.T = templates;
+      this.st = templates.map(t => {
+        const M = t.seq.length;
+        return { D: new Float64Array(M).fill(Infinity), L: new Int32Array(M), S: new Int32Array(M).fill(-1),
+                 nD: new Float64Array(M), nL: new Int32Array(M), nS: new Int32Array(M) };
+      });
+      this.t = 0; this.cand = null; this.cutoff = -1;
+    }
+    // cep: normalized feature; voiced: bool; silPen: cost added to unvoiced frames; thr: detection threshold
+    step(cep, voiced, silPen, thr) {
+      const t = this.t++;
+      let best = Infinity, bestStart = -1;
+      for (let ti = 0; ti < this.T.length; ti++) {
+        const seq = this.T[ti].seq, M = seq.length, s = this.st[ti];
+        const { D, L, S, nD, nL, nS } = s;
+        for (let i = 0; i < M; i++) {
+          let d = dist(cep, seq[i]); if (!voiced) d += silPen;
+          if (i === 0) { nD[0] = d; nL[0] = 1; nS[0] = t; continue; }
+          let bv = Infinity, bD = Infinity, bL = 0, bS = -1;
+          for (let back = 0; back <= 2; back++) {
+            const j = i - back; if (j < 0) break;
+            if (!isFinite(D[j]) || S[j] <= this.cutoff) continue;
+            const v = (D[j] + d) / (L[j] + 1);
+            if (v < bv) { bv = v; bD = D[j] + d; bL = L[j] + 1; bS = S[j]; }
+          }
+          nD[i] = bD; nL[i] = bL; nS[i] = bS;
+        }
+        s.D = nD; s.nD = D; s.L = nL; s.nL = L; s.S = nS; s.nS = S;
+        const e = M - 1;
+        if (isFinite(s.D[e]) && s.L[e] >= 0.5 * M && s.L[e] <= 2 * M) {
+          const sc = s.D[e] / s.L[e];
+          if (sc < best) { best = sc; bestStart = s.S[e]; }
+        }
+      }
+      let fired = false;
+      if (best < thr && (!this.cand || best < this.cand.score)) this.cand = { score: best, t, start: bestStart };
+      if (this.cand && t - this.cand.t >= 4) {
+        fired = true; this.cutoff = this.cand.t; this.cand = null;
+      }
+      return { score: best, fired };
+    }
+  }
+
+  // Build model from raw training samples: [{frames:[{cep,db}]}]
+  function train(samples) {
+    const allDb = [];
+    for (const s of samples) for (const f of s.frames) if (f.db > -100) allDb.push(f.db);
+    if (allDb.length < 30) return { error: "No sound was picked up. Check that the microphone is working." };
+    const floor = pct(allDb, 0.1), peak = pct(allDb, 0.95);
+    if (peak - floor < 8) return { error: "Recordings are too quiet or too noisy. Chant a bit louder and pause about a second before and after." };
+    const gate = Math.max(floor + 6, floor + 0.35 * (peak - floor));
+    const templates = [];
+    for (const s of samples) {
+      const fr = s.frames;
+      let a = 0, b = fr.length - 1;
+      while (a <= b && fr[a].db < gate) a++;
+      while (b >= a && fr[b].db < gate) b--;
+      const seg = fr.slice(a, b + 1);
+      if (seg.length < 15) continue;
+      const m = meanCep(seg, gate);
+      templates.push({ seq: seg.map(f => f.cep.map((v, k) => v - m[k])), mean: m });
+    }
+    if (templates.length < 2) return { error: "Need at least 2 usable samples. Each sample should be one full chant, at least half a second long." };
+    // Calibrate: how well each template matches the others
+    const pair = [];
+    for (let i = 0; i < templates.length; i++) for (let j = 0; j < templates.length; j++) {
+      if (i === j) continue;
+      const mt = new Matcher([templates[i]]);
+      let mn = Infinity;
+      for (const c of templates[j].seq) { const r = mt.step(c, true, 0, -1); if (r.score < mn) mn = r.score; }
+      pair.push(mn);
+    }
+    const thr = Math.max(...pair) * 1.6;
+    const initMean = new Float64Array(templates[0].mean.length);
+    for (const t of templates) for (let k = 0; k < initMean.length; k++) initMean[k] += t.mean[k] / templates.length;
+    const lens = templates.map(t => t.seq.length);
+    return { templates, gate, thr, silPen: thr * 2, initMean, lens, pair };
+  }
+
+  // Live counter wrapping the matcher with running cepstral mean normalization.
+  function Counter(model) {
+    const matcher = new Matcher(model.templates);
+    const mean = Float64Array.from(model.initMean);
+    const norm = new Float32Array(mean.length);
+    return {
+      push(f, sensitivity = 1) {
+        const voiced = f.db >= model.gate;
+        if (voiced) for (let k = 0; k < mean.length; k++) mean[k] += 0.01 * (f.cep[k] - mean[k]);
+        for (let k = 0; k < mean.length; k++) norm[k] = f.cep[k] - mean[k];
+        return matcher.step(norm, voiced, model.silPen, model.thr * sensitivity);
+      }
+    };
+  }
+
+  return { FeatureExtractor, train, Counter };
+})();
+if (typeof module !== "undefined") module.exports = Engine;
+
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+};
+
+let ctx = null, extractor = null, ring = null, mode = "idle";
+let recFrames = [], samples = [], model = null, counter = null;
+let count = store.get("omcount") || 0;
+let sampleRate = null;
+
+// ---- mala ring ----
+const svg = $("malaSvg"), beads = [];
+for (let i = 0; i < 108; i++) {
+  const a = -Math.PI/2 + 2*Math.PI*i/108, r = 118;
+  const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  c.setAttribute("cx", 130 + r*Math.cos(a)); c.setAttribute("cy", 130 + r*Math.sin(a));
+  c.setAttribute("r", i === 0 ? 5 : 3.4); c.setAttribute("fill", "#4a2c22");
+  svg.appendChild(c); beads.push(c);
+}
+function renderCount(flash) {
+  $("countNum").textContent = count;
+  $("roundTxt").textContent = "mala rounds: " + Math.floor(count/108);
+  const k = count % 108;
+  beads.forEach((b,i) => b.setAttribute("fill", i < k ? "#f0a030" : (i === 0 ? "#b8322a" : "#4a2c22")));
+  if (flash) { const n = $("countNum"); n.classList.remove("flash"); void n.offsetWidth; n.classList.add("flash"); }
+  store.set("omcount", count);
+}
+
+// ---- audio ----
+async function ensureAudio() {
+  if (ctx) { if (ctx.state === "suspended") await ctx.resume(); return true; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (sampleRate && sampleRate !== ctx.sampleRate && samples.length) {
+      samples = []; afterSamplesChanged();
+      setStatus("trainStatus", "Your mic setup changed since training, so the old samples were cleared. Please record them again.", "err");
+    }
+    sampleRate = ctx.sampleRate;
+    extractor = Engine.FeatureExtractor(sampleRate);
+    ring = new Float32Array(2048);
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(1024, 1, 1);
+    const mute = ctx.createGain(); mute.gain.value = 0;
+    src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+    proc.onaudioprocess = e => {
+      const x = e.inputBuffer.getChannelData(0);
+      ring.copyWithin(0, 1024); ring.set(x, 1024);
+      if (mode === "idle") return;
+      const f = extractor.frame(ring);
+      if (mode === "record") recFrames.push(f);
+      else if (mode === "listen" && counter) onFrame(f);
+    };
+    return true;
+  } catch (err) {
+    const msg = "Microphone not available: " + (err && err.message ? err.message : err) + ". Allow mic access, and open this page in Chrome or Safari (not inside another app's preview).";
+    setStatus("trainStatus", msg, "err"); setStatus("listenStatus", msg, "err");
+    return false;
+  }
+}
+function setStatus(id, txt, cls) { const el = $(id); el.textContent = txt; el.className = "status" + (cls ? " " + cls : ""); }
+
+// ---- training ----
+function serialize() { return { sr: sampleRate, samples: samples.map(s => ({ frames: s.frames.map(f => [f.db, ...Array.from(f.cep)]) })) }; }
+function loadSaved() {
+  const d = store.get("omsamples");
+  if (!d || !d.samples) return;
+  samples = d.samples.map(s => ({ frames: s.frames.map(a => ({ db: a[0], cep: Float32Array.from(a.slice(1)) })) }));
+  sampleRate = d.sr;
+}
+function renderSamples() {
+  const ul = $("sampleList"); ul.innerHTML = "";
+  samples.forEach((s, i) => {
+    const li = document.createElement("li");
+    const secs = (s.frames.length * 1024 / (sampleRate || 48000)).toFixed(1);
+    li.innerHTML = `<span>Sample ${i+1} · ${secs}s</span>`;
+    const b = document.createElement("button"); b.textContent = "Delete";
+    b.onclick = () => { samples.splice(i,1); afterSamplesChanged(); };
+    li.appendChild(b); ul.appendChild(li);
+  });
+}
+function afterSamplesChanged() {
+  store.set("omsamples", serialize());
+  renderSamples();
+  model = null; counter = null;
+  if (samples.length < 2) {
+    $("listenBtn").disabled = true;
+    setStatus("trainStatus", samples.length ? "1 sample recorded. Record at least one more (3 is best)." : "");
+    return;
+  }
+  const m = Engine.train(samples);
+  if (m.error) { setStatus("trainStatus", m.error, "err"); $("listenBtn").disabled = true; return; }
+  model = m;
+  $("listenBtn").disabled = false;
+  const avg = (m.lens.reduce((a,b)=>a+b,0)/m.lens.length*1024/(sampleRate||48000)).toFixed(1);
+  setStatus("trainStatus", `Trained on ${m.templates.length} samples (about ${avg}s per chant).` + (samples.length < 3 ? " A 3rd sample will make it more reliable." : " Ready to count."), "good");
+}
+$("recBtn").onclick = async () => {
+  if (mode === "record") {
+    mode = "idle"; $("recBtn").textContent = "Record sample"; $("recBtn").className = "primary grow";
+    if (recFrames.length < 30) { setStatus("trainStatus", "That was too short. Try again: one full chant with a pause before and after.", "err"); return; }
+    samples.push({ frames: recFrames }); recFrames = [];
+    afterSamplesChanged();
+    return;
+  }
+  if (!(await ensureAudio())) return;
+  if (mode === "listen") stopListening();
+  recFrames = []; mode = "record";
+  $("recBtn").textContent = "Stop"; $("recBtn").className = "rec grow";
+  setStatus("trainStatus", "Recording… wait a second, chant once, wait a second, then tap Stop.");
+};
+$("clearBtn").onclick = () => { samples = []; afterSamplesChanged(); };
+
+// ---- counting ----
+let lastMeter = 0;
+function onFrame(f) {
+  const sens = parseFloat($("sens").value);
+  const r = counter.push(f, sens);
+  const eff = model.thr * sens;
+  const v = isFinite(r.score) ? Math.min(1.2, eff / r.score) : 0;
+  const now = performance.now();
+  if (now - lastMeter > 60) { $("meterBar").style.width = (v/1.2*100) + "%"; lastMeter = now; }
+  if (r.fired) { count++; renderCount(true); feedback(); }
+}
+function feedback() {
+  if ($("vibChk").checked && navigator.vibrate) { try { navigator.vibrate(40); } catch(e) {} }
+  if ($("beepChk").checked && ctx) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 880; g.gain.setValueAtTime(0.05, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.13);
+  }
+}
+function stopListening() {
+  mode = "idle"; $("listenBtn").textContent = "Start counting"; $("meterBar").style.width = "0";
+  setStatus("listenStatus", "Paused.");
+}
+$("listenBtn").onclick = async () => {
+  if (mode === "listen") { stopListening(); return; }
+  if (!model) return;
+  if (!(await ensureAudio())) return;
+  if (sampleRate && ctx.sampleRate !== sampleRate) {
+    setStatus("listenStatus", "Your mic's sample rate changed since training. Clear the samples and record them again.", "err"); return;
+  }
+  if (mode === "record") return;
+  counter = Engine.Counter(model);
+  mode = "listen"; $("listenBtn").textContent = "Pause";
+  setStatus("listenStatus", "Listening… chant at your own pace.");
+};
+$("plusBtn").onclick = () => { count++; renderCount(true); };
+$("minusBtn").onclick = () => { count = Math.max(0, count-1); renderCount(); };
+$("resetBtn").onclick = () => { count = 0; renderCount(); };
+$("sens").oninput = () => { $("sensVal").textContent = parseFloat($("sens").value).toFixed(2); };
+
+loadSaved(); renderCount(); if (samples.length) afterSamplesChanged();
+</script>
+</body>
+</html>
