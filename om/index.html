@@ -75,7 +75,7 @@
     <div style="margin-top:12px">
       <div class="row small"><span class="grow">Sensitivity</span><span id="sensVal">1.00</span></div>
       <input type="range" id="sens" min="0.6" max="1.8" step="0.05" value="1">
-      <div class="small">Raise it if chants are missed; lower it if it counts things that aren't the mantra.</div>
+      <div class="small">Raise it if full chants are missed; lower it if it counts things that aren't the full mantra. Quick check: say just "Om" — it should not count.</div>
     </div>
     <div class="row" style="margin-top:12px; gap:18px">
       <label class="chk"><input type="checkbox" id="vibChk" checked> Vibrate on count</label>
@@ -180,49 +180,84 @@ const Engine = (() => {
   function dist(a, b) { let s = 0; for (let k = 0; k < a.length; k++) { const d = a[k] - b[k]; s += d * d; } return Math.sqrt(s / a.length); }
 
   // Streaming subsequence DTW against several templates.
+  // Each path keeps cost per template quarter; score = worst quarter's average,
+  // so a good "Om" can't hide a poor match on the rest of the mantra.
+  const K = 4;
   class Matcher {
     constructor(templates) {
       this.T = templates;
       this.st = templates.map(t => {
         const M = t.seq.length;
-        return { D: new Float64Array(M).fill(Infinity), L: new Int32Array(M), S: new Int32Array(M).fill(-1),
-                 nD: new Float64Array(M), nL: new Int32Array(M), nS: new Int32Array(M) };
+        const seg = new Int32Array(M); for (let i = 0; i < M; i++) seg[i] = Math.min(K - 1, Math.floor(i * K / M));
+        const mk = () => ({ D: new Float64Array(M).fill(Infinity), L: new Int32Array(M), S: new Int32Array(M).fill(-1),
+                            Q: new Float64Array(M * K), N: new Int32Array(M * K) });
+        return { M, seg, a: mk(), b: mk() };
       });
       this.t = 0; this.cand = null; this.cutoff = -1;
     }
-    // cep: normalized feature; voiced: bool; silPen: cost added to unvoiced frames; thr: detection threshold
     step(cep, voiced, silPen, thr) {
       const t = this.t++;
-      let best = Infinity, bestStart = -1;
+      let best = Infinity;
       for (let ti = 0; ti < this.T.length; ti++) {
-        const seq = this.T[ti].seq, M = seq.length, s = this.st[ti];
-        const { D, L, S, nD, nL, nS } = s;
+        const seq = this.T[ti].seq, s = this.st[ti], M = s.M, seg = s.seg;
+        const p = s.a, n = s.b;
         for (let i = 0; i < M; i++) {
           let d = dist(cep, seq[i]); if (!voiced) d += silPen;
-          if (i === 0) { nD[0] = d; nL[0] = 1; nS[0] = t; continue; }
-          let bv = Infinity, bD = Infinity, bL = 0, bS = -1;
+          const q = seg[i], o = i * K;
+          if (i === 0) {
+            n.D[0] = d; n.L[0] = 1; n.S[0] = t;
+            for (let k = 0; k < K; k++) { n.Q[k] = 0; n.N[k] = 0; }
+            n.Q[q] = d; n.N[q] = 1; continue;
+          }
+          let bv = Infinity, bj = -1;
           for (let back = 0; back <= 2; back++) {
             const j = i - back; if (j < 0) break;
-            if (!isFinite(D[j]) || S[j] <= this.cutoff) continue;
-            const v = (D[j] + d) / (L[j] + 1);
-            if (v < bv) { bv = v; bD = D[j] + d; bL = L[j] + 1; bS = S[j]; }
+            if (!isFinite(p.D[j]) || p.S[j] <= this.cutoff) continue;
+            const v = (p.D[j] + d) / (p.L[j] + 1);
+            if (v < bv) { bv = v; bj = j; }
           }
-          nD[i] = bD; nL[i] = bL; nS[i] = bS;
+          if (bj < 0) { n.D[i] = Infinity; continue; }
+          n.D[i] = p.D[bj] + d; n.L[i] = p.L[bj] + 1; n.S[i] = p.S[bj];
+          const ob = bj * K;
+          for (let k = 0; k < K; k++) { n.Q[o + k] = p.Q[ob + k]; n.N[o + k] = p.N[ob + k]; }
+          n.Q[o + q] += d; n.N[o + q] += 1;
         }
-        s.D = nD; s.nD = D; s.L = nL; s.nL = L; s.S = nS; s.nS = S;
+        s.a = n; s.b = p;
         const e = M - 1;
-        if (isFinite(s.D[e]) && s.L[e] >= 0.5 * M && s.L[e] <= 2 * M) {
-          const sc = s.D[e] / s.L[e];
-          if (sc < best) { best = sc; bestStart = s.S[e]; }
+        if (isFinite(n.D[e]) && n.L[e] >= 0.6 * M && n.L[e] <= 1.8 * M) {
+          let worst = 0;
+          for (let k = 0; k < K; k++) {
+            const c = n.N[e * K + k]; if (!c) { worst = Infinity; break; }
+            const v = n.Q[e * K + k] / c; if (v > worst) worst = v;
+          }
+          if (worst < best) best = worst;
         }
       }
       let fired = false;
-      if (best < thr && (!this.cand || best < this.cand.score)) this.cand = { score: best, t, start: bestStart };
-      if (this.cand && t - this.cand.t >= 4) {
-        fired = true; this.cutoff = this.cand.t; this.cand = null;
-      }
+      if (best < thr && (!this.cand || best < this.cand.score)) this.cand = { score: best, t };
+      if (this.cand && t - this.cand.t >= 4) { fired = true; this.cutoff = this.cand.t; this.cand = null; }
       return { score: best, fired };
     }
+  }
+
+  function minScoreOf(tpl, seq) {
+    const mt = new Matcher([tpl]); let mn = Infinity;
+    for (const c of seq) { const r = mt.step(c, true, 0, -1); if (r.score < mn) mn = r.score; }
+    return mn;
+  }
+  // Fake "not the mantra" examples made from the user's own chant:
+  // keep the opening (Om), then scramble, repeat or reverse what follows.
+  function negatives(seq) {
+    const M = seq.length, c = [0, 1, 2, 3, 4].map(k => Math.floor(k * M / 4));
+    const ch = k => seq.slice(c[k], c[k + 1]);
+    return [
+      [...ch(0), ...ch(2), ...ch(1), ...ch(3)],
+      [...ch(0), ...ch(3), ...ch(2), ...ch(1)],
+      [...ch(0), ...ch(1), ...ch(3), ...ch(2)],
+      [...ch(0), ...ch(0), ...ch(0), ...ch(0)],
+      [...ch(0), ...seq.slice(c[1]).reverse()],
+      seq.slice().reverse(),
+    ];
   }
 
   // Build model from raw training samples: [{frames:[{cep,db}]}]
@@ -245,20 +280,19 @@ const Engine = (() => {
       templates.push({ seq: seg.map(f => f.cep.map((v, k) => v - m[k])), mean: m });
     }
     if (templates.length < 2) return { error: "Need at least 2 usable samples. Each sample should be one full chant, at least half a second long." };
-    // Calibrate: how well each template matches the others
-    const pair = [];
+    // Calibrate on positives (other real chants) and negatives (scrambled chants).
+    const pair = [], neg = [];
     for (let i = 0; i < templates.length; i++) for (let j = 0; j < templates.length; j++) {
-      if (i === j) continue;
-      const mt = new Matcher([templates[i]]);
-      let mn = Infinity;
-      for (const c of templates[j].seq) { const r = mt.step(c, true, 0, -1); if (r.score < mn) mn = r.score; }
-      pair.push(mn);
+      if (i !== j) pair.push(minScoreOf(templates[i], templates[j].seq));
+      for (const ns of negatives(templates[j].seq)) neg.push(minScoreOf(templates[i], ns));
     }
-    const thr = Math.max(...pair) * 1.6;
+    const posMax = Math.max(...pair), negMin = Math.min(...neg);
+    const separated = negMin > posMax * 1.05;
+    const thr = separated ? Math.min(posMax * 1.3, posMax + 0.4 * (negMin - posMax)) : posMax * 1.05;
     const initMean = new Float64Array(templates[0].mean.length);
     for (const t of templates) for (let k = 0; k < initMean.length; k++) initMean[k] += t.mean[k] / templates.length;
     const lens = templates.map(t => t.seq.length);
-    return { templates, gate, thr, silPen: thr * 2, initMean, lens, pair };
+    return { templates, gate, thr, silPen: thr * 2, initMean, lens, pair, posMax, negMin, separated };
   }
 
   // Live counter wrapping the matcher with running cepstral mean normalization.
@@ -269,7 +303,7 @@ const Engine = (() => {
     return {
       push(f, sensitivity = 1) {
         const voiced = f.db >= model.gate;
-        if (voiced) for (let k = 0; k < mean.length; k++) mean[k] += 0.01 * (f.cep[k] - mean[k]);
+        if (voiced) for (let k = 0; k < mean.length; k++) mean[k] += 0.0 * (f.cep[k] - mean[k]);
         for (let k = 0; k < mean.length; k++) norm[k] = f.cep[k] - mean[k];
         return matcher.step(norm, voiced, model.silPen, model.thr * sensitivity);
       }
@@ -378,7 +412,12 @@ function afterSamplesChanged() {
   model = m;
   $("listenBtn").disabled = false;
   const avg = (m.lens.reduce((a,b)=>a+b,0)/m.lens.length*1024/(sampleRate||48000)).toFixed(1);
-  setStatus("trainStatus", `Trained on ${m.templates.length} samples (about ${avg}s per chant).` + (samples.length < 3 ? " A 3rd sample will make it more reliable." : " Ready to count."), "good");
+  const sep = (m.negMin / m.posMax).toFixed(1);
+  if (!m.separated) {
+    setStatus("trainStatus", `Trained, but your samples look too different from each other to reliably reject other words. Delete the odd one out and record again at the same pace and pitch.`, "err");
+  } else {
+    setStatus("trainStatus", `Trained on ${m.templates.length} samples (about ${avg}s per chant). Real vs. fake chants are ${sep}x apart.` + (samples.length < 3 ? " A 3rd sample will make it more reliable." : " Ready to count."), "good");
+  }
 }
 $("recBtn").onclick = async () => {
   if (mode === "record") {
