@@ -1,748 +1,584 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Om Mani Padme Hum Counter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#170d0b">
+<title>Mani Counter</title>
 <style>
-  :root { --bg:#1b0f0c; --card:#2a1813; --line:#4a2c22; --text:#f5e9dc; --mute:#c2a890; --saffron:#f0a030; --red:#b8322a; --ok:#6cc070; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-  main { max-width:520px; margin:0 auto; padding:20px 16px 48px; }
-  h1 { font-size:20px; margin:4px 0 2px; }
-  .sub { color:var(--mute); font-size:14px; margin:0 0 16px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
-  h2 { font-size:15px; margin:0 0 8px; color:var(--saffron); text-transform:uppercase; letter-spacing:.06em; }
-  p.hint { color:var(--mute); font-size:14px; margin:0 0 12px; }
-  button { font:inherit; border:0; border-radius:10px; padding:12px 16px; cursor:pointer; background:#3b241c; color:var(--text); }
-  button.primary { background:var(--saffron); color:#2a1205; font-weight:600; }
-  button.rec { background:var(--red); color:#fff; font-weight:600; }
-  button:disabled { opacity:.4; cursor:default; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .grow { flex:1; }
-  ul { list-style:none; padding:0; margin:10px 0 0; }
-  li { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-top:1px solid var(--line); font-size:14px; }
-  li button { padding:5px 10px; font-size:13px; }
-  .status { font-size:14px; margin-top:10px; min-height:20px; }
-  .status.err { color:#ff8a7a; } .status.good { color:var(--ok); }
-  .big { font-size:28px; font-weight:700; font-variant-numeric:tabular-nums; }
-  .mala { position:relative; width:260px; height:260px; margin:4px auto 10px; }
-  .mala svg { width:100%; height:100%; }
-  .count { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .count b { font-size:64px; line-height:1; font-variant-numeric:tabular-nums; }
-  .count span { color:var(--mute); font-size:13px; margin-top:6px; }
-  .bar { height:10px; background:#3b241c; border-radius:6px; position:relative; overflow:hidden; margin:6px 0 2px; }
-  .bar i { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--saffron); transition:width .08s; }
-  .small { font-size:13px; color:var(--mute); }
-  input[type=range] { width:100%; accent-color:var(--saffron); }
-  label.chk { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--mute); }
-  .flash { animation:flash .35s; }
-  @keyframes flash { from { transform:scale(1.15); color:var(--saffron); } to { transform:scale(1); } }
-  .check { font-size:14px; margin-top:8px; min-height:20px; }
+:root{--bg:#170d0b;--panel:#241512;--line:#3d2620;--text:#f3e7d6;--dim:#b39c88;--gold:#f0a63a;--red:#a8322a;--ok:#7fc58a;--bad:#e0705f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:18px 16px 48px}
+header{text-align:center;margin-bottom:6px}
+h1{font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin:0;color:var(--dim)}
+.tib{font-size:26px;color:var(--gold);margin:2px 0 0}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;margin:14px 0}
+.tabs button{flex:1;background:none;border:0;color:var(--dim);padding:10px;border-radius:9px;font:inherit;font-weight:600}
+.tabs button[aria-selected=true]{background:var(--red);color:#fff}
+section[hidden]{display:none}
+.ring{position:relative;width:min(100%,340px);margin:4px auto 0}
+.ring svg{display:block;width:100%;height:auto}
+.bead{fill:#3a241e}.bead.on{fill:var(--gold)}.bead.guru{fill:var(--red)}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+#count{font-size:84px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;transition:transform .12s}
+#count.pulse{transform:scale(1.12);color:var(--gold)}
+#rounds{color:var(--dim);font-size:14px;margin-top:6px}
+.meter{height:8px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;width:0;background:var(--gold);transition:width .08s linear}
+.meter.lvl i{background:#6d5a4c}
+.lab{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:12px}
+.btn{display:block;width:100%;padding:15px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-weight:600;margin-top:12px}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.live{background:#fff;color:#7a1f19;border-color:#fff}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px}.row .btn{margin-top:10px;padding:11px}
+#status{min-height:44px;margin-top:12px;font-size:14px;color:var(--dim);text-align:center}
+#status b{color:var(--text)}
+.parts{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.parts span{width:26px;height:6px;border-radius:3px;background:var(--line)}
+.parts span.g{background:var(--ok)}.parts span.b{background:var(--bad)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card p{margin:4px 0;color:var(--dim);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 11px;font-size:13px}
+.chip.odd{border-color:var(--bad);color:var(--bad)}
+.chip button{border:0;background:var(--line);color:var(--text);width:22px;height:22px;border-radius:50%;font-size:14px;line-height:1;padding:0}
+#modelState{font-size:14px;margin-top:10px}
+#modelState.good{color:var(--ok)}#modelState.warn{color:var(--gold)}#modelState.bad{color:var(--bad)}
+input[type=range]{width:100%;accent-color:var(--gold);margin-top:8px}
+.link{background:none;border:0;color:var(--dim);text-decoration:underline;font:inherit;font-size:13px;padding:8px 0;margin-top:8px}
 </style>
 </head>
 <body>
 <main>
-  <h1>Om Mani Padme Hum Counter</h1>
-  <p class="sub">Trains a small neural network on your own voice. Recordings, training and the model all stay on this device.</p>
+<header><h1>Mani Counter</h1><p class="tib">ཨོཾ་མ་ཎི་པདྨེ་ཧཱུྃ</p></header>
 
-  <section class="card">
-    <h2>1 · Record your chants</h2>
-    <p class="hint">Tap Record and chant the full mantra 10–15 times, with a short pause (about half a second) between each. Do this once or twice to collect 20 or more.</p>
-    <div class="row">
-      <button class="primary grow" id="posBtn">Record chants</button>
-      <div style="text-align:right"><div class="big" id="posCount">0</div><div class="small">chants</div></div>
-    </div>
-    <ul id="posList"></ul>
-    <div class="status" id="posStatus"></div>
-  </section>
+<div class="tabs" role="tablist">
+  <button role="tab" id="tabCount" aria-selected="true">Count</button>
+  <button role="tab" id="tabTeach" aria-selected="false">Teach</button>
+</div>
 
-  <section class="card">
-    <h2>2 · Record other sounds</h2>
-    <p class="hint">Record 30–60 seconds of things that should <b>not</b> count: normal talking, "Om" on its own, half the mantra, other prayers, background noise.</p>
-    <div class="row">
-      <button class="primary grow" id="othBtn">Record other sounds</button>
-      <div style="text-align:right"><div class="big" id="othSecs">0s</div><div class="small">recorded</div></div>
-    </div>
-    <ul id="othList"></ul>
-    <div class="status" id="othStatus"></div>
-  </section>
+<section id="viewCount">
+  <div class="ring">
+    <svg viewBox="0 0 320 320" id="mala" aria-hidden="true"></svg>
+    <div class="center"><div id="count">0</div><div id="rounds">0 of 108</div></div>
+  </div>
+  <div class="lab"><span>Microphone</span><span>Match</span></div>
+  <div class="row"><div class="meter lvl" style="flex:1"><i id="lvl"></i></div><div class="meter" style="flex:1"><i id="close"></i></div></div>
+  <button class="btn primary" id="listen">Start counting</button>
+  <div id="status"></div>
+  <div class="row">
+    <button class="btn" id="minus">−1</button>
+    <button class="btn" id="plus">+1</button>
+    <button class="btn" id="reset">Reset</button>
+  </div>
+  <div class="card">
+    <h2>Strictness</h2>
+    <p>Left counts only close matches. Move right if real chants are being missed.</p>
+    <input type="range" id="sens" min="0.75" max="1.35" step="0.01" value="1">
+  </div>
+</section>
 
-  <section class="card">
-    <h2>3 · Train the model</h2>
-    <p class="hint">Trains a small neural network (about 5,000 weights) here on your phone, then saves it on this device.</p>
-    <div class="row"><button class="primary grow" id="trainBtn" disabled>Train model</button></div>
-    <div class="bar" style="margin-top:12px"><i id="trainBar"></i></div>
-    <div class="status" id="trainStatus"></div>
-    <div class="row" style="margin-top:8px"><button id="dlBtn" disabled>Download model files</button><button id="wipeBtn">Delete all data</button></div>
-  </section>
-
-  <section class="card">
-    <h2>4 · Count</h2>
-    <div class="mala">
-      <svg viewBox="0 0 260 260" id="malaSvg"></svg>
-      <div class="count"><b id="countNum">0</b><span id="roundTxt">mala rounds: 0</span></div>
-    </div>
-    <div class="row">
-      <button class="primary grow" id="listenBtn" disabled>Start counting</button>
-      <button id="minusBtn">−1</button>
-      <button id="plusBtn">+1</button>
-      <button id="resetBtn">Reset</button>
-    </div>
-    <div class="check" id="lastCheck"></div>
-    <div style="margin-top:12px">
-      <div class="row small"><span class="grow">Strictness (how sure the model must be)</span><span id="strictVal">60%</span></div>
-      <input type="range" id="strict" min="0.3" max="0.95" step="0.05" value="0.6">
-      <div class="small">Lower it if full chants are missed; raise it if other sounds get counted.</div>
-    </div>
-    <div class="row" style="margin-top:12px; gap:18px">
-      <label class="chk"><input type="checkbox" id="vibChk" checked> Vibrate on count</label>
-      <label class="chk"><input type="checkbox" id="beepChk"> Soft beep</label>
-    </div>
-    <div class="status" id="listenStatus"></div>
-  </section>
-
-  <p class="small">How it works: a fast pattern matcher (dynamic time warping) spots anything that might be a chant. Each candidate is passed to the neural network, a 1-D convolutional network over your voice's spectrogram, which only counts it if it's the full mantra in the right order. Besides your recordings, the network learns from partial and scrambled versions of your own chants.</p>
+<section id="viewTeach" hidden>
+  <div class="card">
+    <h2>1. Record your chant</h2>
+    <p>Tap record and chant “Om Mani Padme Hum” 3 to 5 times at your normal pace, with a short pause between each. Each chant becomes one sample.</p>
+    <button class="btn primary" id="recPos">Record chants</button>
+    <div class="meter lvl"><i id="lvlT"></i></div>
+    <div class="chips" id="posChips"></div>
+    <div id="modelState"></div>
+  </div>
+  <div class="card">
+    <h2>2. Things that should not count (optional)</h2>
+    <p>Record anything that gets counted by mistake: just “Om”, half the mantra, talking, a TV in the room. The detector tightens itself to reject it.</p>
+    <button class="btn" id="recNeg">Record a “do not count” clip</button>
+    <div class="chips" id="negChips"></div>
+  </div>
+  <button class="link" id="wipe">Delete all samples and start over</button>
+</section>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 <script>
-// Mantra counter engine: MFCC features + streaming subsequence DTW template matching.
-const Engine = (() => {
-  function makeFFT(n) {
-    const levels = Math.log2(n);
-    const rev = new Uint32Array(n);
-    for (let i = 0; i < n; i++) {
-      let r = 0, x = i;
-      for (let j = 0; j < levels; j++) { r = (r << 1) | (x & 1); x >>= 1; }
-      rev[i] = r;
+/* Om Mani Padme Hum detector engine.
+   Few-shot keyword spotting: MFCC features -> streaming subsequence DTW against
+   the user's own recordings -> second-pass verifier that checks every part of
+   the phrase -> threshold calibrated automatically from the samples. */
+(function (root) {
+  'use strict';
+  const SR = 16000, WIN = 400, HOP = 160, NFFT = 512, NMEL = 26, NCEP = 12;
+  const RAWD = NCEP + 1;            // 12 cepstra + log energy
+  const DIM = NCEP * 2 + 1;         // statics + deltas + energy
+  const E_FLOOR = 7, E_SCALE = 3.5, DELTA_W = 0.7;
+  const NSEG = 6;                   // phrase is checked in 6 consecutive parts
+  const MAX_TPL = 8;
+
+  /* ---------- FFT + mel + DCT tables ---------- */
+  const cosT = new Float64Array(NFFT / 2), sinT = new Float64Array(NFFT / 2);
+  for (let i = 0; i < NFFT / 2; i++) { cosT[i] = Math.cos(2 * Math.PI * i / NFFT); sinT[i] = Math.sin(2 * Math.PI * i / NFFT); }
+  const rev = new Uint16Array(NFFT);
+  for (let i = 0, bits = Math.log2(NFFT); i < NFFT; i++) { let r = 0; for (let b = 0; b < bits; b++) if (i & (1 << b)) r |= 1 << (bits - 1 - b); rev[i] = r; }
+  const ham = new Float64Array(WIN);
+  for (let i = 0; i < WIN; i++) ham[i] = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (WIN - 1));
+  const mel = f => 2595 * Math.log10(1 + f / 700), imel = m => 700 * (Math.pow(10, m / 2595) - 1);
+  const NB = NFFT / 2 + 1, fb = [];
+  (function () {
+    const lo = mel(100), hi = mel(7000), pts = [];
+    for (let i = 0; i < NMEL + 2; i++) pts.push(imel(lo + (hi - lo) * i / (NMEL + 1)) * NFFT / SR);
+    for (let m = 0; m < NMEL; m++) {
+      const a = pts[m], b = pts[m + 1], c = pts[m + 2], w = [];
+      for (let k = Math.ceil(a); k < c && k < NB; k++) w.push([k, k < b ? (k - a) / (b - a) : (c - k) / (c - b)]);
+      fb.push(w);
     }
-    const cs = new Float64Array(n / 2), sn = new Float64Array(n / 2);
-    for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(2 * Math.PI * i / n); sn[i] = Math.sin(2 * Math.PI * i / n); }
-    return function (re, im) {
+  })();
+  const dct = new Float64Array(NCEP * NMEL);
+  for (let k = 0; k < NCEP; k++) for (let m = 0; m < NMEL; m++) dct[k * NMEL + m] = Math.cos(Math.PI * (k + 1) * (m + 0.5) / NMEL);
+
+  const re = new Float64Array(NFFT), im = new Float64Array(NFFT), melE = new Float64Array(NMEL);
+  function frameFeatures(buf, off, prev, out, o) {
+    for (let i = 0; i < NFFT; i++) { re[i] = 0; im[i] = 0; }
+    let p = prev;
+    for (let i = 0; i < WIN; i++) { const x = buf[off + i]; re[rev[i]] = (x - 0.97 * p) * ham[i]; p = x; }
+    for (let size = 2; size <= NFFT; size <<= 1) {
+      const half = size >> 1, step = NFFT / size;
+      for (let s = 0; s < NFFT; s += size) for (let j = 0, k = 0; j < half; j++, k += step) {
+        const a = s + j, b = a + half, tr = re[b] * cosT[k] + im[b] * sinT[k], ti = im[b] * cosT[k] - re[b] * sinT[k];
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+      }
+    }
+    let tot = 0;
+    for (let k = 0; k < NB; k++) { re[k] = re[k] * re[k] + im[k] * im[k]; tot += re[k]; }
+    for (let m = 0; m < NMEL; m++) { let s = 0; const w = fb[m]; for (let j = 0; j < w.length; j++) s += re[w[j][0]] * w[j][1]; melE[m] = Math.log(s + 1e-9); }
+    for (let k = 0; k < NCEP; k++) { let s = 0; for (let m = 0; m < NMEL; m++) s += dct[k * NMEL + m] * melE[m]; out[o + k] = s; }
+    out[o + NCEP] = Math.log(tot + 1e-9);
+  }
+
+  /* ---------- streaming front end: any sample rate in, raw frames out ---------- */
+  class FrontEnd {
+    constructor(inRate, onFrame) {
+      this.inRate = inRate; this.onFrame = onFrame;
+      this.acc = 0; this.cnt = 0; this.phase = 0;
+      this.buf = new Float32Array(SR); this.len = 0; this.prev = 0;
+      this.tmp = new Float32Array(RAWD);
+    }
+    push(chunk) {
+      for (let i = 0; i < chunk.length; i++) {
+        this.acc += chunk[i]; this.cnt++; this.phase += SR;
+        if (this.phase >= this.inRate) {
+          this.phase -= this.inRate;
+          this.buf[this.len++] = this.acc / this.cnt; this.acc = 0; this.cnt = 0;
+          if (this.len >= WIN) {
+            frameFeatures(this.buf, 0, this.prev, this.tmp, 0);
+            this.onFrame(this.tmp);
+            this.prev = this.buf[HOP - 1];
+            this.buf.copyWithin(0, HOP, this.len); this.len -= HOP;
+          }
+        }
+      }
+    }
+  }
+  function extractRaw(samples, rate) {
+    const rows = [];
+    const fe = new FrontEnd(rate, f => rows.push(Float32Array.from(f)));
+    fe.push(samples);
+    const raw = new Float32Array(rows.length * RAWD);
+    rows.forEach((r, i) => raw.set(r, i * RAWD));
+    return { raw, n: rows.length };
+  }
+
+  /* ---------- split a training recording into separate chants ---------- */
+  function segmentUtterances(raw, n) {
+    if (n < 30) return [];
+    const e = new Float32Array(n);
+    for (let t = 0; t < n; t++) e[t] = raw[t * RAWD + NCEP];
+    const sorted = Float32Array.from(e).sort();
+    const peak = sorted[Math.floor(n * 0.98)], noise = sorted[Math.floor(n * 0.1)];
+    if (peak - noise < 2.3) return [];
+    const thr = Math.max(noise + 2.3, peak - 6.9);
+    const on = new Uint8Array(n);
+    for (let t = 0; t < n; t++) on[t] = e[t] > thr ? 1 : 0;
+    // close short gaps (stops inside "padme"), drop short blips
+    let last = -1000;
+    for (let t = 0; t < n; t++) if (on[t]) { if (t - last <= 28 && last >= 0) for (let k = last + 1; k < t; k++) on[k] = 1; last = t; }
+    const out = [];
+    for (let t = 0; t < n;) {
+      if (!on[t]) { t++; continue; }
+      let b = t; while (b < n && on[b]) b++;
+      if (b - t >= 45 && b - t <= 800) out.push([Math.max(0, t - 3), Math.min(n, b + 3)]);
+      t = b;
+    }
+    return out;
+  }
+
+  /* ---------- normalisation ---------- */
+  function segStats(raw, n) {
+    let peak = -Infinity;
+    for (let t = 0; t < n; t++) peak = Math.max(peak, raw[t * RAWD + NCEP]);
+    const mean = new Float64Array(NCEP); let c = 0;
+    for (let t = 0; t < n; t++) if (raw[t * RAWD + NCEP] > peak - 5) { c++; for (let k = 0; k < NCEP; k++) mean[k] += raw[t * RAWD + k]; }
+    for (let k = 0; k < NCEP; k++) mean[k] /= Math.max(1, c);
+    return { mean, peak };
+  }
+  function buildVec(stat, n, raw, peak, dstd) {
+    const f = new Float32Array(n * DIM);
+    for (let t = 0; t < n; t++) {
+      const a = Math.max(0, t - 2), b = Math.max(0, t - 1), c = Math.min(n - 1, t + 1), d = Math.min(n - 1, t + 2);
+      for (let k = 0; k < NCEP; k++) {
+        f[t * DIM + k] = stat[t * NCEP + k];
+        f[t * DIM + NCEP + k] = DELTA_W * (2 * (stat[d * NCEP + k] - stat[a * NCEP + k]) + stat[c * NCEP + k] - stat[b * NCEP + k]) / 10 / dstd[k];
+      }
+      f[t * DIM + 2 * NCEP] = Math.max(raw[t * RAWD + NCEP] - peak, -E_FLOOR) / E_SCALE;
+    }
+    return f;
+  }
+  function statics(raw, n, mean, cstd) {
+    const s = new Float32Array(n * NCEP);
+    for (let t = 0; t < n; t++) for (let k = 0; k < NCEP; k++) s[t * NCEP + k] = (raw[t * RAWD + k] - mean[k]) / cstd[k];
+    return s;
+  }
+  function normSegment(raw, n, st) {
+    const s = segStats(raw, n);
+    return buildVec(statics(raw, n, s.mean, st.cstd), n, raw, s.peak, st.dstd);
+  }
+
+  function dist(a, ao, b, bo) {
+    let s = 0;
+    for (let k = 0; k < DIM; k++) { const d = a[ao + k] - b[bo + k]; s += d * d; }
+    return Math.sqrt(s / DIM);
+  }
+
+  /* ---------- verifier: full alignment, every part of the phrase must match ---------- */
+  function alignScore(tf, n, sf, m) {
+    if (m < n * 0.5 + 1 || m > n * 2 - 1) return null;
+    const C = new Float32Array(n * m).fill(Infinity), bp = new Uint8Array(n * m), D = new Float32Array(n * m);
+    D[0] = dist(tf, 0, sf, 0); C[0] = D[0];
+    for (let i = 1; i < n; i++) {
+      const jlo = Math.max(1, Math.ceil(i / 2), m - 1 - 2 * (n - 1 - i)), jhi = Math.min(m - 1, 2 * i, m - 1 - Math.floor((n - 1 - i) / 2));
+      for (let j = jlo; j <= jhi; j++) {
+        const d = dist(tf, i * DIM, sf, j * DIM); D[i * m + j] = d;
+        let best = C[(i - 1) * m + j - 1] + 2 * d, w = 1;
+        if (i >= 2) { const v = C[(i - 2) * m + j - 1] + 3 * d; if (v < best) { best = v; w = 2; } }
+        if (j >= 2) { const v = C[(i - 1) * m + j - 2] + 3 * d; if (v < best) { best = v; w = 3; } }
+        C[i * m + j] = best; bp[i * m + j] = w;
+      }
+    }
+    const total = C[n * m - 1];
+    if (!isFinite(total)) return null;
+    const sc = new Float64Array(NSEG), sw = new Float64Array(NSEG);
+    let i = n - 1, j = m - 1;
+    while (true) {
+      const w = bp[i * m + j], wt = i === 0 && j === 0 ? 1 : (w === 1 ? 2 : 3), k = Math.min(NSEG - 1, Math.floor(i * NSEG / n));
+      sc[k] += wt * D[i * m + j]; sw[k] += wt;
+      if (i === 0 && j === 0) break;
+      if (w === 1) { i--; j--; } else if (w === 2) { i -= 2; j--; } else { i--; j -= 2; }
+    }
+    let worst = 0; const segs = [];
+    for (let k = 0; k < NSEG; k++) { const v = sw[k] ? sc[k] / sw[k] : 9; segs.push(v); if (v > worst) worst = v; }
+    const meanC = total / (n + m - 1);
+    return { score: 0.5 * meanC + 0.5 * worst, mean: meanC, worst, segs };
+  }
+  // score a normalised segment against a set of templates
+  function scoreAgainst(tpls, sf, m) {
+    const rs = [];
+    for (const t of tpls) { const r = alignScore(t.f, t.n, sf, m); if (r) rs.push(r); }
+    if (!rs.length) return null;
+    rs.sort((a, b) => a.score - b.score);
+    const score = rs.length >= 3 ? (rs[0].score + rs[1].score) / 2 : rs[0].score;
+    return { score, segs: rs[0].segs, mean: rs[0].mean, worst: rs[0].worst };
+  }
+
+  /* ---------- streaming spotter (one per template) ---------- */
+  class Spotter {
+    constructor(tpl) {
+      this.f = tpl.f; this.n = tpl.n;
+      const n = tpl.n;
+      this.C = [0, 1, 2].map(() => new Float32Array(n).fill(Infinity));
+      this.W = [0, 1, 2].map(() => new Float32Array(n).fill(1));
+      this.S = [0, 1, 2].map(() => new Int32Array(n));
+      this.cost = Infinity; this.start = 0;
+    }
+    step(x, t) {
+      const n = this.n, f = this.f;
+      const C0 = this.C[2], W0 = this.W[2], S0 = this.S[2], C1 = this.C[0], W1 = this.W[0], S1 = this.S[0], C2 = this.C[1], W2 = this.W[1], S2 = this.S[1];
+      // rotate: [0]=t-1, [1]=t-2, [2]=scratch -> after: [0]=t, [1]=t-1, [2]=old t-2
       for (let i = 0; i < n; i++) {
-        const j = rev[i];
-        if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+        const d = dist(x, 0, f, i * DIM);
+        if (i === 0) { C0[0] = d; W0[0] = 1; S0[0] = t; continue; }
+        let bc = C1[i - 1] + 2 * d, bw = W1[i - 1] + 2, bs = S1[i - 1];
+        if (i >= 2 && isFinite(C1[i - 2])) { const c = C1[i - 2] + 3 * d, w = W1[i - 2] + 3; if (c * bw < bc * w) { bc = c; bw = w; bs = S1[i - 2]; } }
+        if (isFinite(C2[i - 1])) { const c = C2[i - 1] + 3 * d, w = W2[i - 1] + 3; if (c * bw < bc * w) { bc = c; bw = w; bs = S2[i - 1]; } }
+        C0[i] = bc; W0[i] = bw; S0[i] = bs;
       }
-      for (let size = 2; size <= n; size <<= 1) {
-        const half = size >> 1, step = n / size;
-        for (let i = 0; i < n; i += size) {
-          for (let j = 0, k = 0; j < half; j++, k += step) {
-            const a = i + j, b = a + half;
-            const tre = re[b] * cs[k] + im[b] * sn[k];
-            const tim = -re[b] * sn[k] + im[b] * cs[k];
-            re[b] = re[a] - tre; im[b] = im[a] - tim;
-            re[a] += tre; im[a] += tim;
-          }
-        }
-      }
-    };
-  }
-
-  const N_MEL = 26, N_CEP = 12, DCT = [];
-  for (let k = 1; k <= N_CEP; k++) {
-    const row = new Float64Array(N_MEL);
-    for (let m = 0; m < N_MEL; m++) row[m] = Math.cos(Math.PI * k * (m + 0.5) / N_MEL) * Math.sqrt(2 / N_MEL);
-    DCT.push(row);
-  }
-  function melToCep(mel) {
-    const cep = new Float32Array(N_CEP);
-    for (let k = 0; k < N_CEP; k++) { let s = 0; const row = DCT[k]; for (let m = 0; m < N_MEL; m++) s += row[m] * mel[m]; cep[k] = s; }
-    return cep;
-  }
-
-  function FeatureExtractor(sampleRate, N = 2048, nMel = N_MEL, nCep = N_CEP, fmin = 60, fmax = 4000) {
-    const fft = makeFFT(N);
-    const win = new Float64Array(N);
-    for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
-    const re = new Float64Array(N), im = new Float64Array(N);
-    const mel = f => 2595 * Math.log10(1 + f / 700);
-    const imel = m => 700 * (Math.pow(10, m / 2595) - 1);
-    const mlo = mel(fmin), mhi = mel(Math.min(fmax, sampleRate / 2));
-    const pts = [];
-    for (let i = 0; i < nMel + 2; i++) pts.push(imel(mlo + (mhi - mlo) * i / (nMel + 1)) * N / sampleRate);
-    const filters = [];
-    for (let m = 0; m < nMel; m++) {
-      const l = pts[m], c = pts[m + 1], r = pts[m + 2];
-      const start = Math.max(1, Math.floor(l)), end = Math.min(N / 2, Math.ceil(r));
-      const w = [];
-      for (let k = start; k <= end; k++) {
-        let v = 0;
-        if (k >= l && k <= c) v = (k - l) / (c - l || 1);
-        else if (k > c && k <= r) v = (r - k) / (r - c || 1);
-        w.push(Math.max(0, v));
-      }
-      filters.push({ start, w });
-    }
-    const logmel = new Float64Array(nMel);
-    return {
-      N, nCep,
-      frame(x) {
-        let e = 0;
-        for (let i = 0; i < N; i++) { re[i] = x[i] * win[i]; im[i] = 0; e += x[i] * x[i]; }
-        fft(re, im);
-        for (let m = 0; m < nMel; m++) {
-          const f = filters[m]; let s = 0;
-          for (let j = 0; j < f.w.length; j++) { const k = f.start + j; s += f.w[j] * (re[k] * re[k] + im[k] * im[k]); }
-          logmel[m] = Math.log(s + 1e-10);
-        }
-        const mel = Float32Array.from(logmel);
-        return { cep: melToCep(mel), mel, db: 10 * Math.log10(e / N + 1e-12) };
-      }
-    };
-  }
-
-  function pct(arr, p) { const a = [...arr].sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * (a.length - 1))))]; }
-
-  function meanCep(frames, gate) {
-    const n = frames[0].cep.length, m = new Float64Array(n); let c = 0;
-    for (const f of frames) if (f.db >= gate) { for (let k = 0; k < n; k++) m[k] += f.cep[k]; c++; }
-    if (c) for (let k = 0; k < n; k++) m[k] /= c;
-    return m;
-  }
-
-  function dist(a, b) { let s = 0; for (let k = 0; k < a.length; k++) { const d = a[k] - b[k]; s += d * d; } return Math.sqrt(s / a.length); }
-
-  // Streaming subsequence DTW against several templates.
-  // Each path keeps cost per template quarter; score = worst quarter's average,
-  // so a good "Om" can't hide a poor match on the rest of the mantra.
-  const K = 4;
-  class Matcher {
-    constructor(templates) {
-      this.T = templates;
-      this.st = templates.map(t => {
-        const M = t.seq.length;
-        const seg = new Int32Array(M); for (let i = 0; i < M; i++) seg[i] = Math.min(K - 1, Math.floor(i * K / M));
-        const mk = () => ({ D: new Float64Array(M).fill(Infinity), L: new Int32Array(M), S: new Int32Array(M).fill(-1),
-                            Q: new Float64Array(M * K), N: new Int32Array(M * K) });
-        return { M, seg, a: mk(), b: mk() };
-      });
-      this.t = 0; this.cand = null; this.cutoff = -1;
-    }
-    step(cep, voiced, silPen, thr) {
-      const t = this.t++;
-      let best = Infinity, bestStart = -1;
-      for (let ti = 0; ti < this.T.length; ti++) {
-        const seq = this.T[ti].seq, s = this.st[ti], M = s.M, seg = s.seg;
-        const p = s.a, n = s.b;
-        for (let i = 0; i < M; i++) {
-          let d = dist(cep, seq[i]); if (!voiced) d += silPen;
-          const q = seg[i], o = i * K;
-          if (i === 0) {
-            n.D[0] = d; n.L[0] = 1; n.S[0] = t;
-            for (let k = 0; k < K; k++) { n.Q[k] = 0; n.N[k] = 0; }
-            n.Q[q] = d; n.N[q] = 1; continue;
-          }
-          let bv = Infinity, bj = -1;
-          for (let back = 0; back <= 2; back++) {
-            const j = i - back; if (j < 0) break;
-            if (!isFinite(p.D[j]) || p.S[j] <= this.cutoff) continue;
-            const v = (p.D[j] + d) / (p.L[j] + 1);
-            if (v < bv) { bv = v; bj = j; }
-          }
-          if (bj < 0) { n.D[i] = Infinity; continue; }
-          n.D[i] = p.D[bj] + d; n.L[i] = p.L[bj] + 1; n.S[i] = p.S[bj];
-          const ob = bj * K;
-          for (let k = 0; k < K; k++) { n.Q[o + k] = p.Q[ob + k]; n.N[o + k] = p.N[ob + k]; }
-          n.Q[o + q] += d; n.N[o + q] += 1;
-        }
-        s.a = n; s.b = p;
-        const e = M - 1;
-        if (isFinite(n.D[e]) && n.L[e] >= 0.6 * M && n.L[e] <= 1.8 * M) {
-          let worst = 0;
-          for (let k = 0; k < K; k++) {
-            const c = n.N[e * K + k]; if (!c) { worst = Infinity; break; }
-            const v = n.Q[e * K + k] / c; if (v > worst) worst = v;
-          }
-          if (worst < best) { best = worst; bestStart = n.S[e]; }
-        }
-      }
-      let fired = null;
-      if (best < thr && (!this.cand || best < this.cand.score)) this.cand = { score: best, t, start: bestStart };
-      if (this.cand && t - this.cand.t >= 4) { fired = this.cand; this.cutoff = this.cand.t; this.cand = null; }
-      return { score: best, fired };
+      this.C = [C0, C1, C2]; this.W = [W0, W1, W2]; this.S = [S0, S1, S2];
+      this.cost = C0[n - 1] / W0[n - 1]; this.start = S0[n - 1];
     }
   }
 
-  function minScoreOf(tpl, seq) {
-    const mt = new Matcher([tpl]); let mn = Infinity;
-    for (const c of seq) { const r = mt.step(c, true, 0, -1); if (r.score < mn) mn = r.score; }
-    return mn;
-  }
-  // Fake "not the mantra" examples made from the user's own chant:
-  // keep the opening (Om), then scramble, repeat or reverse what follows.
-  function negatives(seq) {
-    const M = seq.length, c = [0, 1, 2, 3, 4].map(k => Math.floor(k * M / 4));
-    const ch = k => seq.slice(c[k], c[k + 1]);
-    return [
-      [...ch(0), ...ch(2), ...ch(1), ...ch(3)],
-      [...ch(0), ...ch(3), ...ch(2), ...ch(1)],
-      [...ch(0), ...ch(1), ...ch(3), ...ch(2)],
-      [...ch(0), ...ch(0), ...ch(0), ...ch(0)],
-      [...ch(0), ...seq.slice(c[1]).reverse()],
-      seq.slice().reverse(),
-    ];
-  }
-
-  // Build model from raw training samples: [{frames:[{cep,db}]}]
-  function train(samples) {
-    const allDb = [];
-    for (const s of samples) for (const f of s.frames) if (f.db > -100) allDb.push(f.db);
-    if (allDb.length < 30) return { error: "No sound was picked up. Check that the microphone is working." };
-    const floor = pct(allDb, 0.1), peak = pct(allDb, 0.95);
-    if (peak - floor < 8) return { error: "Recordings are too quiet or too noisy. Chant a bit louder and pause about a second before and after." };
-    const gate = Math.max(floor + 6, floor + 0.35 * (peak - floor));
-    const templates = [];
-    for (const s of samples) {
-      const fr = s.frames;
-      let a = 0, b = fr.length - 1;
-      while (a <= b && fr[a].db < gate) a++;
-      while (b >= a && fr[b].db < gate) b--;
-      const seg = fr.slice(a, b + 1);
-      if (seg.length < 15) continue;
-      const m = meanCep(seg, gate);
-      templates.push({ seq: seg.map(f => f.cep.map((v, k) => v - m[k])), mean: m });
+  /* ---------- live detector ---------- */
+  class Detector {
+    constructor(model, cb) {
+      this.m = model; this.cb = cb || {};
+      this.sens = 1;
+      this.spot = model.templates.map(t => new Spotter(t));
+      this.maxN = Math.max(...model.templates.map(t => t.n));
+      this.hist = 2 * this.maxN + 64;
+      this.raw = new Float32Array(this.hist * RAWD);   // ring of raw frames
+      this.stat = new Float32Array(5 * NCEP);          // ring of last 5 static frames
+      this.en = new Float32Array(5);
+      this.t = 0;                                      // raw frames seen
+      this.mean = Float64Array.from(model.priorMean); this.nv = 0;
+      this.peak = model.priorPeak - 4.6;
+      this.cand = null; this.lastEnd = -1e9;
+      this.x = new Float32Array(DIM);
+      this.level = 0; this.closeness = 0;
     }
-    if (templates.length < 2) return { error: "Need at least 2 usable samples. Each sample should be one full chant, at least half a second long." };
-    // Calibrate on positives (other real chants) and negatives (scrambled chants).
-    const pair = [], neg = [];
-    for (let i = 0; i < templates.length; i++) for (let j = 0; j < templates.length; j++) {
-      if (i !== j) pair.push(minScoreOf(templates[i], templates[j].seq));
-      for (const ns of negatives(templates[j].seq)) neg.push(minScoreOf(templates[i], ns));
-    }
-    const posMax = Math.max(...pair), negMin = Math.min(...neg);
-    const separated = negMin > posMax * 1.05;
-    const thr = separated ? Math.min(posMax * 1.3, posMax + 0.4 * (negMin - posMax)) : posMax * 1.05;
-    const initMean = new Float64Array(templates[0].mean.length);
-    for (const t of templates) for (let k = 0; k < initMean.length; k++) initMean[k] += t.mean[k] / templates.length;
-    const lens = templates.map(t => t.seq.length);
-    return { templates, gate, thr, silPen: thr * 2, initMean, lens, pair, posMax, negMin, separated };
-  }
-
-  // Live counter wrapping the matcher with running cepstral mean normalization.
-  function Counter(model) {
-    const matcher = new Matcher(model.templates);
-    const mean = Float64Array.from(model.initMean);
-    const norm = new Float32Array(mean.length);
-    return {
-      push(f, sensitivity = 1) {
-        const voiced = f.db >= model.gate;
-        if (voiced) for (let k = 0; k < mean.length; k++) mean[k] += 0.0 * (f.cep[k] - mean[k]);
-        for (let k = 0; k < mean.length; k++) norm[k] = f.cep[k] - mean[k];
-        return matcher.step(norm, voiced, model.silPen, model.thr * sensitivity);
+    get thr() { return this.m.thr * this.sens; }
+    pushRaw(fr) {
+      const t = this.t++, m = this.m;
+      this.raw.set(fr, (t % this.hist) * RAWD);
+      const e = fr[NCEP];
+      this.peak = Math.max(e, this.peak - 0.003, m.priorPeak - 4.6);
+      if (e > this.peak - 5) {
+        const a = Math.max(1 / 300, 1 / (++this.nv + 30));
+        for (let k = 0; k < NCEP; k++) this.mean[k] += (fr[k] - this.mean[k]) * a;
       }
-    };
+      const so = (t % 5) * NCEP;
+      for (let k = 0; k < NCEP; k++) this.stat[so + k] = (fr[k] - this.mean[k]) / m.cstd[k];
+      this.en[t % 5] = Math.max(e - this.peak, -E_FLOOR) / E_SCALE;
+      this.level = Math.max(0, 1 + (e - this.peak) / E_FLOOR);
+      if (t < 4) return;
+      // emit normalised frame for index u = t-2
+      const u = t - 2, x = this.x, S = this.stat, o = k => ((u + k) % 5) * NCEP;
+      const a = o(-2), b = o(-1), c0 = o(0), c = o(1), d = o(2);
+      for (let k = 0; k < NCEP; k++) {
+        x[k] = S[c0 + k];
+        x[NCEP + k] = DELTA_W * (2 * (S[d + k] - S[a + k]) + S[c + k] - S[b + k]) / 10 / m.dstd[k];
+      }
+      x[2 * NCEP] = this.en[u % 5];
+      let best = Infinity, bs = 0;
+      for (const s of this.spot) { s.step(x, u); if (s.cost < best) { best = s.cost; bs = s.start; } }
+      const thr = this.thr, spotThr = thr * 1.3;
+      this.closeness = Math.max(0, Math.min(1, thr / best));
+      if (best < spotThr && bs >= this.lastEnd - 12) {
+        if (!this.cand || best < this.cand.cost) this.cand = { cost: best, s: bs, e: u };
+      }
+      if (this.cand && u - this.cand.e >= 12) { const cd = this.cand; this.cand = null; this.verify(cd); }
+    }
+    verify(cd) {
+      const s = Math.max(cd.s - 1, this.t - this.hist + 1, 0), e = cd.e + 1, n = e - s + 1;
+      const seg = new Float32Array(n * RAWD);
+      for (let i = 0; i < n; i++) { const o = ((s + i) % this.hist) * RAWD; seg.set(this.raw.subarray(o, o + RAWD), i * RAWD); }
+      const r = scoreAgainst(this.m.templates, normSegment(seg, n, this.m), n);
+      const ev = { score: r ? r.score : Infinity, thr: this.thr, segs: r ? r.segs : null, frames: n, end: cd.e };
+      ev.match = Math.max(0, Math.min(1, 1 - 0.5 * ev.score / ev.thr));
+      if (r && r.score <= this.thr) { this.lastEnd = cd.e; this.cb.onCount && this.cb.onCount(ev); }
+      else this.cb.onReject && this.cb.onReject(ev);
+    }
   }
 
-  return { FeatureExtractor, melToCep, train, Counter };
-})();
-if (typeof module !== "undefined") module.exports = Engine;
+  /* ---------- training: build templates + calibrate the threshold ---------- */
+  function hardNegatives(raw, n) {
+    const row = t => raw.subarray(t * RAWD, (t + 1) * RAWD), mk = idx => { const o = new Float32Array(idx.length * RAWD); idx.forEach((t, i) => o.set(typeof t === 'number' ? row(t) : t, i * RAWD)); return o; };
+    const p = Math.floor(n * 0.35), h = Math.floor(n / 2), out = [];
+    let q = 0; for (let t = 1; t < n; t++) if (raw[t * RAWD + NCEP] < raw[q * RAWD + NCEP]) q = t;
+    const quiet = Float32Array.from(row(q)); quiet[NCEP] -= 3;
+    const idx = (fn) => { const a = []; for (let t = 0; t < n; t++) a.push(fn(t)); return a; };
+    out.push(mk(idx(t => t < p ? t : n - 1 - (t - p))));        // "Om" + rest reversed
+    out.push(mk(idx(t => t % p)));                               // "Om Om Om"
+    out.push(mk(idx(t => t < p ? t : quiet)));                   // "Om" then silence
+    out.push(mk(idx(t => t % h)));                               // first half twice
+    out.push(mk(idx(t => (t + h) % n)));                         // halves swapped
+    out.push(mk(idx(t => n - 1 - t)));                           // fully reversed
+    out.push(mk(idx(t => t < n - p ? t : quiet)));               // ending cut off
+    return out;
+  }
+  function buildModel(samples, negClips) {
+    samples = samples.slice(-MAX_TPL); negClips = negClips || [];
+    if (!samples.length) return null;
+    const stats = samples.map(s => segStats(s.raw, s.n));
+    const priorMean = new Float64Array(NCEP); let priorPeak = 0;
+    stats.forEach(s => { for (let k = 0; k < NCEP; k++) priorMean[k] += s.mean[k] / stats.length; priorPeak += s.peak / stats.length; });
+    const cstd = new Float64Array(NCEP), dstd = new Float64Array(NCEP).fill(1); let cnt = 0;
+    samples.forEach((s, i) => { for (let t = 0; t < s.n; t++) { cnt++; for (let k = 0; k < NCEP; k++) { const d = s.raw[t * RAWD + k] - stats[i].mean[k]; cstd[k] += d * d; } } });
+    for (let k = 0; k < NCEP; k++) cstd[k] = Math.sqrt(cstd[k] / cnt) + 1e-6;
+    const st = { cstd, dstd };
+    const acc = new Float64Array(NCEP);
+    samples.forEach(s => { const f = normSegment(s.raw, s.n, st); for (let t = 0; t < s.n; t++) for (let k = 0; k < NCEP; k++) { const v = f[t * DIM + NCEP + k] / DELTA_W; acc[k] += v * v; } });
+    for (let k = 0; k < NCEP; k++) dstd[k] = Math.sqrt(acc[k] / cnt) + 1e-6;
+    const templates = samples.map(s => ({ n: s.n, f: normSegment(s.raw, s.n, st) }));
+    // positives: each sample scored against the others
+    const pos = [];
+    if (templates.length >= 2) templates.forEach((t, i) => { const r = scoreAgainst(templates.filter((_, j) => j !== i), t.f, t.n); pos.push(r ? r.score : NaN); });
+    // negatives: scrambled versions of the samples + anything the user recorded
+    const neg = [];
+    samples.forEach(s => hardNegatives(s.raw, s.n).forEach(h => { const r = scoreAgainst(templates, normSegment(h, s.n, st), s.n); if (r) neg.push(r.score); }));
+    const okPos = pos.filter(isFinite), negLo = Math.min(...neg);
+    const posHi = okPos.length ? Math.max(...okPos) : 0;
+    let thr, quality;
+    if (okPos.length) {
+      if (negLo > posHi * 1.1) { thr = Math.min(posHi + 0.5 * (negLo - posHi), posHi * 1.6); quality = negLo > posHi * 1.35 ? 'good' : 'ok'; }
+      else { thr = negLo > posHi ? (posHi + negLo) / 2 : posHi; quality = 'weak'; }
+    } else { thr = 0.7 * negLo; quality = 'single'; }
+    const model = { templates, cstd, dstd, priorMean, priorPeak, thr, pos, negLo, quality, userNeg: [] };
+    // "should not count" recordings: run the real pipeline over them and keep the threshold below their best score
+    for (const c of negClips) {
+      let best = Infinity; const note = e => { if (e.score < best) best = e.score; };
+      const det = new Detector(model, { onCount: note, onReject: note }); det.sens = 2.2;
+      for (let t = 0; t < c.n; t++) det.pushRaw(c.raw.subarray(t * RAWD, (t + 1) * RAWD));
+      if (isFinite(best)) model.userNeg.push(best);
+    }
+    if (model.userNeg.length) model.thr = Math.min(thr, Math.max(posHi * 1.02, Math.min(...model.userNeg) * 0.93));
+    return model;
+  }
+
+  const api = { SR, HOP, RAWD, NSEG, MAX_TPL, FrontEnd, extractRaw, segmentUtterances, buildModel, Detector };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.OmEngine = api;
+})(typeof self !== 'undefined' ? self : this);
 
 </script>
 <script>
-// On-device neural verifier for the mantra counter. Needs global `tf` (TensorFlow.js) and `Engine`.
-const NN = (() => {
-  const T = 32, F = 26;           // network input: 32 time steps x 26 mel bands
-  const PAD = 15;                 // frames of context kept around each recorded chant
+(function(){
+'use strict';
+const E = OmEngine, $ = id => document.getElementById(id), KEY = 'om.mani.v2';
+const S = { samples: [], negs: [], count: 0, sens: 1 };
+let model = null, det = null, micStop = null, mode = null, wake = null;
 
-  function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-  function pct(a, p) { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.max(0, Math.floor(p * (b.length - 1))))]; }
-
-  function gateOf(frames) {
-    const dbs = frames.map(f => f.db).filter(d => d > -100);
-    if (dbs.length < 20) return null;
-    const floor = pct(dbs, 0.1), peak = pct(dbs, 0.95);
-    if (peak - floor < 8) return null;
-    return Math.max(floor + 6, floor + 0.35 * (peak - floor));
-  }
-
-  // Split a recording into voiced segments separated by pauses.
-  function segment(frames, gate, minGap = 14, minLen = 25) {
-    const segs = []; let a = -1, lastV = -1e9;
-    for (let i = 0; i < frames.length; i++) {
-      if (frames[i].db >= gate) {
-        if (a < 0) a = i; else if (i - lastV > minGap) { segs.push([a, lastV]); a = i; }
-        lastV = i;
-      }
-    }
-    if (a >= 0) segs.push([a, lastV]);
-    return segs.filter(([s, e]) => e - s + 1 >= minLen);
-  }
-
-  // Cut chants out of a chanting session. Returns [{frames, a, b}] with a..b the chant inside padded frames.
-  function chantsFromSession(frames) {
-    const gate = gateOf(frames);
-    if (gate === null) return { error: "Couldn't hear clear chanting. Chant a little louder, with a short pause between each one." };
-    let segs = segment(frames, gate);
-    if (!segs.length) return { error: "No chants found. Leave a short pause (about half a second) between chants." };
-    const med = pct(segs.map(([a, b]) => b - a + 1), 0.5);
-    segs = segs.filter(([a, b]) => { const L = b - a + 1; return L >= 0.55 * med && L <= 1.8 * med; });
-    return {
-      chants: segs.map(([a, b]) => {
-        const s = Math.max(0, a - PAD), e = Math.min(frames.length - 1, b + PAD);
-        return { frames: frames.slice(s, e + 1), a: a - s, b: b - s };
-      }), skipped: 0
-    };
-  }
-
-  // Resample mel frames [a, b] (fractional ok) to T steps and standardize.
-  function toInput(mels, a, b, out, off) {
-    const x = out || new Float32Array(T * F), o = off || 0;
-    const len = Math.max(1, b - a);
-    for (let t = 0; t < T; t++) {
-      const pos = a + len * t / (T - 1);
-      const i0 = Math.max(0, Math.min(mels.length - 1, Math.floor(pos))), i1 = Math.min(mels.length - 1, i0 + 1), w = pos - Math.floor(pos);
-      for (let f = 0; f < F; f++) x[o + t * F + f] = mels[i0][f] * (1 - w) + mels[i1][f] * w;
-    }
-    let m = 0, v = 0;
-    for (let i = 0; i < T * F; i++) m += x[o + i];
-    m /= T * F;
-    for (let i = 0; i < T * F; i++) { const d = x[o + i] - m; v += d * d; }
-    const sd = Math.sqrt(v / (T * F)) + 1e-6;
-    for (let i = 0; i < T * F; i++) x[o + i] = (x[o + i] - m) / sd;
-    return x;
-  }
-  function concatMels(parts) { const r = []; for (const p of parts) for (const m of p) r.push(m); return r; }
-
-  // Build training examples. pos: chants; other: recordings of non-mantra sounds.
-  function buildDataset(pos, other, seed = 1) {
-    const R = rng(seed), X = [], Y = [];
-    const add = (mels, a, b, y) => { X.push(toInput(mels, a, b)); Y.push(y); };
-    const jitter = (L, f) => (R() * 2 - 1) * f * L;
-    let avgLen = 0;
-    for (const c of pos) {
-      const mels = c.frames.map(f => f.mel), L = c.b - c.a;
-      avgLen += L / pos.length;
-      // positives: the chant with boundaries nudged the way live detection nudges them
-      add(mels, c.a, c.b, 1);
-      for (let k = 0; k < 7; k++) add(mels, Math.max(0, c.a + jitter(L, 0.08)), Math.min(mels.length - 1, c.b + jitter(L, 0.08)), 1);
-      // hard negatives from the user's own voice: partial chants and scrambled order
-      const ch = [0, 1, 2, 3, 4].map(k => c.a + Math.round(k * L / 4));
-      const piece = k => mels.slice(ch[k], ch[k + 1] + 1);
-      add(mels, c.a, c.a + 0.3 * L, 0);
-      add(mels, c.a, c.a + 0.55 * L, 0);
-      add(mels, c.a, c.a + 0.75 * L, 0);
-      add(mels, c.a + 0.4 * L, c.b, 0);
-      const orders = [[0, 2, 1, 3], [0, 3, 2, 1], [0, 1, 3, 2], [0, 0, 0, 0], [0, 0, 1, 1], [3, 2, 1, 0]];
-      for (const o of orders) { const m2 = concatMels(o.map(piece)); add(m2, 0, m2.length - 1, 0); }
-    }
-    // negatives from other sounds: every voiced stretch, plus random windows of chant length
-    for (const rec of other) {
-      const mels = rec.map(f => f.mel), gate = gateOf(rec);
-      if (gate !== null) for (const [a, b] of segment(rec, gate, 14, 10)) {
-        add(mels, a, b, 0);
-        if (b - a > 1.4 * avgLen) for (let s = a; s + avgLen <= b; s += avgLen / 2) add(mels, s, s + avgLen, 0);
-      }
-      const n = Math.max(4, Math.round(mels.length / avgLen * 3));
-      for (let k = 0; k < n && mels.length > avgLen * 0.5; k++) {
-        const L = avgLen * (0.6 + 0.8 * R()), s = R() * Math.max(1, mels.length - L);
-        add(mels, s, Math.min(mels.length - 1, s + L), 0);
-      }
-    }
-    return { X, Y };
-  }
-
-  function makeModel() {
-    const m = tf.sequential();
-    // 1-D convolution over time; the 26 mel bands are the input channels
-    m.add(tf.layers.conv1d({ inputShape: [T, F], filters: 16, kernelSize: 5, padding: "same", activation: "relu" }));
-    m.add(tf.layers.maxPooling1d({ poolSize: 2 }));
-    m.add(tf.layers.conv1d({ filters: 16, kernelSize: 3, padding: "same", activation: "relu" }));
-    m.add(tf.layers.maxPooling1d({ poolSize: 2 }));
-    m.add(tf.layers.flatten());      // keeps time order, so scrambled chants look different
-    m.add(tf.layers.dropout({ rate: 0.3 }));
-    m.add(tf.layers.dense({ units: 16, activation: "relu" }));
-    m.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
-    m.compile({ optimizer: tf.train.adam(0.003), loss: "binaryCrossentropy", metrics: ["accuracy"] });
-    return m;
-  }
-
-  function shuffle(a, R) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  function tensorOf(X) { const buf = new Float32Array(X.length * T * F); X.forEach((x, i) => buf.set(x, i * T * F)); return tf.tensor3d(buf, [X.length, T, F]); }
-
-  // Full training: DTW templates + neural network. onProgress(epoch, epochs, logs)
-  async function trainAll(pos, other, onProgress, epochs = 20) {
-    if (pos.length < 8) return { error: "Need at least 8 chants (20 or more is better)." };
-    const R = rng(42);
-    // 1) DTW candidate finder from 3 chants closest to the median length
-    const lens = pos.map(c => c.b - c.a), med = pct(lens, 0.5);
-    const pick = pos.map((c, i) => [Math.abs(lens[i] - med), i]).sort((x, y) => x[0] - y[0]).slice(0, 3).map(p => pos[p[1]]);
-    const dtw = Engine.train(pick.map(c => ({ frames: c.frames })));
-    if (dtw.error) return dtw;
-    // 2) hold out ~20% of chants and other recordings for an honest accuracy check
-    const idx = shuffle(pos.map((_, i) => i), R), nVal = Math.max(2, Math.round(pos.length * 0.2));
-    const valPos = idx.slice(0, nVal).map(i => pos[i]), trPos = idx.slice(nVal).map(i => pos[i]);
-    const splitRec = rec => { const k = Math.floor(rec.length * 0.8); return [rec.slice(0, k), rec.slice(k)]; };
-    const trOther = [], valOther = [];
-    for (const r of other) { const [a, b] = splitRec(r); trOther.push(a); valOther.push(b); }
-    const tr = buildDataset(trPos, trOther, 1), va = buildDataset(valPos, valOther, 2);
-    const order = shuffle(tr.X.map((_, i) => i), R);
-    const xs = tensorOf(order.map(i => tr.X[i])), ys = tf.tensor2d(order.map(i => [tr.Y[i]]));
-    const n1 = tr.Y.filter(y => y === 1).length, n0 = tr.Y.length - n1;
-    const net = makeModel();
-    await net.fit(xs, ys, {
-      epochs, batchSize: 32, shuffle: true,
-      classWeight: { 0: tr.Y.length / (2 * n0), 1: tr.Y.length / (2 * n1) },
-      callbacks: { onEpochEnd: async (ep, logs) => { if (onProgress) onProgress(ep + 1, epochs, logs); await tf.nextFrame(); } }
-    });
-    xs.dispose(); ys.dispose();
-    // 3) validation on held-out data
-    const vx = tensorOf(va.X), vp = net.predict(vx), probs = await vp.data(); vx.dispose(); vp.dispose();
-    let tp = 0, fn = 0, tn = 0, fp = 0;
-    va.Y.forEach((y, i) => { const p = probs[i] >= 0.5; if (y) p ? tp++ : fn++; else p ? fp++ : tn++; });
-    const stats = { trainExamples: tr.Y.length, valExamples: va.Y.length, recall: tp / Math.max(1, tp + fn), falseAccept: fp / Math.max(1, fp + tn) };
-    return { dtw, net, stats };
-  }
-
-  // Live counting: DTW proposes a chant (loosely), the network confirms it.
-  function Live(dtw, net, looseness = 1.5) {
-    const counter = Engine.Counter(dtw);
-    const ring = [], RING = 800; let t0 = 0;    // mel history, absolute index of ring[0]
-    return {
-      push(f, strictness = 0.6) {
-        ring.push(f.mel); if (ring.length > RING) { ring.shift(); t0++; }
-        const r = counter.push(f, looseness);
-        let p = null, counted = false;
-        if (r.fired && r.fired.start >= t0) {
-          const x = toInput(ring, r.fired.start - t0, r.fired.t - t0);
-          p = tf.tidy(() => net.predict(tf.tensor3d(x, [1, T, F])).dataSync()[0]);
-          counted = p >= strictness;
-        }
-        return { score: r.score, thr: dtw.thr * looseness, p, counted };
-      }
-    };
-  }
-
-  async function save(net, dtw) {
-    await net.save("indexeddb://om-verifier");
-    const d = { ...dtw, templates: dtw.templates.map(t => ({ seq: t.seq.map(a => Array.from(a)), mean: Array.from(t.mean) })), initMean: Array.from(dtw.initMean) };
-    localStorage.setItem("om-dtw", JSON.stringify(d));
-  }
-  async function load() {
-    const d = JSON.parse(localStorage.getItem("om-dtw") || "null");
-    if (!d) return null;
-    const net = await tf.loadLayersModel("indexeddb://om-verifier");
-    d.templates = d.templates.map(t => ({ seq: t.seq.map(a => Float32Array.from(a)), mean: Float64Array.from(t.mean) }));
-    d.initMean = Float64Array.from(d.initMean);
-    return { net, dtw: d };
-  }
-
-  return { T, F, chantsFromSession, buildDataset, makeModel, trainAll, Live, save, load, toInput };
-})();
-if (typeof module !== "undefined") module.exports = NN;
-
-</script>
-<script>
-const $ = id => document.getElementById(id);
-const ls = {
-  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
-  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e) { return false; } },
-  del(k){ try { localStorage.removeItem(k); } catch(e) {} }
-};
-function setStatus(id, txt, cls) { const el = $(id); el.textContent = txt; el.className = "status" + (cls ? " " + cls : ""); }
-
-let ctx = null, extractor = null, ring = null, mode = "idle", recFrames = [];
-let sampleRate = ls.get("om-sr");
-let pos = [], oth = [];       // pos: [{frames,a,b}], oth: [frames[]]
-let trained = null, live = null;
-let count = ls.get("omcount") || 0;
-
-// ---- storage (compact: [db, ...mel] rounded) ----
-const packF = fs => fs.map(f => [Math.round(f.db * 10) / 10, ...Array.from(f.mel, v => Math.round(v * 100) / 100)]);
-const unpackF = arr => arr.map(a => { const mel = Float32Array.from(a.slice(1)); return { db: a[0], mel, cep: Engine.melToCep(mel) }; });
-function saveData() {
-  const ok = ls.set("om-pos", pos.map(c => ({ a: c.a, b: c.b, f: packF(c.frames) }))) && ls.set("om-oth", oth.map(packF));
-  ls.set("om-sr", sampleRate);
-  if (!ok) setStatus("trainStatus", "This device's storage is full, so recordings won't be kept after you close the page. A trained model is still saved.", "err");
+/* ---------- storage ---------- */
+const enc = f => { const u = new Uint8Array(f.buffer, f.byteOffset, f.byteLength); let s = ''; for (let i = 0; i < u.length; i += 8192) s += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(s); };
+const dec = b => { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Float32Array(u.buffer); };
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({ count: S.count, sens: S.sens, samples: S.samples.map(x => ({ n: x.n, raw: enc(x.raw) })), negs: S.negs.map(x => ({ n: x.n, raw: enc(x.raw) })) })); } catch (e) {}
 }
-function loadData() {
-  const p = ls.get("om-pos"), o = ls.get("om-oth");
-  if (p) pos = p.map(c => ({ a: c.a, b: c.b, frames: unpackF(c.f) }));
-  if (o) oth = o.map(unpackF);
-}
-
-// ---- mala ----
-const svg = $("malaSvg"), beads = [];
-for (let i = 0; i < 108; i++) {
-  const a = -Math.PI/2 + 2*Math.PI*i/108, r = 118;
-  const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
-  c.setAttribute("cx", 130 + r*Math.cos(a)); c.setAttribute("cy", 130 + r*Math.sin(a));
-  c.setAttribute("r", i === 0 ? 5 : 3.4); svg.appendChild(c); beads.push(c);
-}
-function renderCount(flash) {
-  $("countNum").textContent = count;
-  $("roundTxt").textContent = "mala rounds: " + Math.floor(count/108);
-  const k = count % 108;
-  beads.forEach((b,i) => b.setAttribute("fill", i < k ? "#f0a030" : (i === 0 ? "#b8322a" : "#4a2c22")));
-  if (flash) { const n = $("countNum"); n.classList.remove("flash"); void n.offsetWidth; n.classList.add("flash"); }
-  ls.set("omcount", count);
-}
-
-// ---- lists ----
-const fsec = n => (n * 1024 / (sampleRate || 48000));
-function renderLists() {
-  $("posCount").textContent = pos.length;
-  const groups = {}; pos.forEach((c, i) => { (groups[c.g || 0] = groups[c.g || 0] || []).push(i); });
-  const pl = $("posList"); pl.innerHTML = "";
-  if (pos.length) {
-    const li = document.createElement("li");
-    li.innerHTML = `<span>${pos.length} chants · average ${(pos.reduce((s,c)=>s+c.b-c.a,0)/pos.length*1024/(sampleRate||48000)).toFixed(1)}s each</span>`;
-    const b = document.createElement("button"); b.textContent = "Delete all"; b.onclick = () => { pos = []; saveData(); renderLists(); };
-    li.appendChild(b); pl.appendChild(li);
-  }
-  const total = oth.reduce((s, r) => s + fsec(r.length), 0);
-  $("othSecs").textContent = Math.round(total) + "s";
-  const ol = $("othList"); ol.innerHTML = "";
-  oth.forEach((r, i) => {
-    const li = document.createElement("li"); li.innerHTML = `<span>Recording ${i+1} · ${Math.round(fsec(r.length))}s</span>`;
-    const b = document.createElement("button"); b.textContent = "Delete"; b.onclick = () => { oth.splice(i,1); saveData(); renderLists(); };
-    li.appendChild(b); ol.appendChild(li);
-  });
-  $("trainBtn").disabled = !(pos.length >= 8 && total >= 15);
-  if (pos.length < 8) setStatus("trainStatus", `Need at least 8 chants (have ${pos.length}) and 15 s of other sounds (have ${Math.round(total)} s).`);
-  else if (total < 15) setStatus("trainStatus", `Need at least 15 s of other sounds (have ${Math.round(total)} s).`);
-  else if (!trained) setStatus("trainStatus", "Ready to train." + (pos.length < 20 ? " More chants (20+) will make it more accurate." : ""));
-}
-
-// ---- audio ----
-async function ensureAudio() {
-  if (ctx) { if (ctx.state === "suspended") await ctx.resume(); return true; }
+function load() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (sampleRate && sampleRate !== ctx.sampleRate && (pos.length || oth.length || trained)) {
-      pos = []; oth = []; trained = null; ls.del("om-dtw"); $("listenBtn").disabled = true;
-      setStatus("trainStatus", "Your microphone setup changed since training, so the old recordings and model were cleared. Please record again.", "err");
-    }
-    sampleRate = ctx.sampleRate; ls.set("om-sr", sampleRate);
-    extractor = Engine.FeatureExtractor(sampleRate);
-    ring = new Float32Array(2048);
-    const src = ctx.createMediaStreamSource(stream);
-    const proc = ctx.createScriptProcessor(1024, 1, 1);
-    const mute = ctx.createGain(); mute.gain.value = 0;
-    src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
-    proc.onaudioprocess = e => {
-      ring.copyWithin(0, 1024); ring.set(e.inputBuffer.getChannelData(0), 1024);
-      if (mode === "idle") return;
-      const f = extractor.frame(ring);
-      if (mode === "pos" || mode === "oth") recFrames.push(f);
-      else if (mode === "listen" && live) onFrame(f);
-    };
-    renderLists();
-    return true;
+    const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) return;
+    S.count = d.count | 0; S.sens = +d.sens || 1;
+    S.samples = (d.samples || []).map(x => ({ n: x.n, raw: dec(x.raw) }));
+    S.negs = (d.negs || []).map(x => ({ n: x.n, raw: dec(x.raw) }));
+  } catch (e) {}
+}
+
+/* ---------- microphone ---------- */
+async function openMic(onFrame) {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  await ctx.resume();
+  const src = ctx.createMediaStreamSource(stream), fe = new E.FrontEnd(ctx.sampleRate, onFrame);
+  let node;
+  try {
+    const code = 'class P extends AudioWorkletProcessor{process(i){const c=i[0][0];if(c)this.port.postMessage(c.slice(0));return true}}registerProcessor("om-tap",P)';
+    await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([code], { type: 'application/javascript' })));
+    node = new AudioWorkletNode(ctx, 'om-tap', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+    node.port.onmessage = e => fe.push(e.data);
   } catch (err) {
-    const msg = "Microphone not available: " + (err && err.message ? err.message : err) + ". Allow microphone access for this site in your browser settings.";
-    ["posStatus","othStatus","listenStatus"].forEach(id => setStatus(id, msg, "err"));
-    return false;
+    node = ctx.createScriptProcessor(4096, 1, 1);
+    node.onaudioprocess = e => fe.push(e.inputBuffer.getChannelData(0));
   }
+  const mute = ctx.createGain(); mute.gain.value = 0;
+  src.connect(node); node.connect(mute); mute.connect(ctx.destination);
+  return () => { stream.getTracks().forEach(t => t.stop()); ctx.close(); };
 }
-function stopAll() {
-  if (mode === "listen") { mode = "idle"; $("listenBtn").textContent = "Start counting"; setStatus("listenStatus", "Paused."); }
+function stopMic() { if (micStop) { micStop(); micStop = null; } mode = null; if (wake) { wake.release().catch(() => {}); wake = null; } }
+function micError(el, e) { el.textContent = location.protocol === 'https:' || location.hostname === 'localhost' ? 'Microphone not available: allow microphone access for this page and try again.' : 'The microphone only works on an https page.'; }
+
+/* ---------- count view ---------- */
+const NB = 108;
+(function drawMala() {
+  let h = '';
+  for (let i = 0; i < NB; i++) { const a = -Math.PI / 2 + 2 * Math.PI * (i + 1) / (NB + 1); h += `<circle class="bead" cx="${(160 + 146 * Math.cos(a)).toFixed(1)}" cy="${(160 + 146 * Math.sin(a)).toFixed(1)}" r="3.4"/>`; }
+  $('mala').innerHTML = h + '<circle class="bead guru" cx="160" cy="14" r="6"/>';
+})();
+function renderCount(pulse) {
+  const inRound = S.count % NB, rounds = Math.floor(S.count / NB), lit = S.count && !inRound ? NB : inRound;
+  $('count').textContent = S.count;
+  $('rounds').textContent = (rounds ? rounds + (rounds === 1 ? ' round + ' : ' rounds + ') : '') + inRound + ' of ' + NB;
+  const beads = $('mala').querySelectorAll('.bead:not(.guru)');
+  beads.forEach((b, i) => b.classList.toggle('on', i < lit));
+  if (pulse) { const c = $('count'); c.classList.add('pulse'); setTimeout(() => c.classList.remove('pulse'), 160); }
 }
-
-$("posBtn").onclick = async () => {
-  if (mode === "pos") {
-    mode = "idle"; $("posBtn").textContent = "Record chants"; $("posBtn").className = "primary grow";
-    const r = NN.chantsFromSession(recFrames); recFrames = [];
-    if (r.error) { setStatus("posStatus", r.error, "err"); return; }
-    pos.push(...r.chants); saveData(); renderLists();
-    setStatus("posStatus", `Found ${r.chants.length} chants in that recording.` + (r.chants.length < 5 ? " If that's fewer than you chanted, leave clearer pauses between chants." : ""), "good");
-    return;
-  }
-  if (mode !== "idle" && mode !== "listen") return;
-  if (!(await ensureAudio())) return;
-  stopAll(); recFrames = []; mode = "pos";
-  $("posBtn").textContent = "Stop"; $("posBtn").className = "rec grow";
-  setStatus("posStatus", "Recording… chant the full mantra, pausing briefly between each. Tap Stop when done.");
-};
-$("othBtn").onclick = async () => {
-  if (mode === "oth") {
-    mode = "idle"; $("othBtn").textContent = "Record other sounds"; $("othBtn").className = "primary grow";
-    if (recFrames.length < 100) { setStatus("othStatus", "That was too short. Record at least a few seconds.", "err"); recFrames = []; return; }
-    oth.push(recFrames); recFrames = []; saveData(); renderLists();
-    setStatus("othStatus", "Saved.", "good");
-    return;
-  }
-  if (mode !== "idle" && mode !== "listen") return;
-  if (!(await ensureAudio())) return;
-  stopAll(); recFrames = []; mode = "oth";
-  $("othBtn").textContent = "Stop"; $("othBtn").className = "rec grow";
-  setStatus("othStatus", "Recording… talk, say “Om” alone, say part of the mantra, other prayers. Tap Stop when done.");
-};
-
-// ---- training ----
-$("trainBtn").onclick = async () => {
-  stopAll();
-  $("trainBtn").disabled = true; $("listenBtn").disabled = true;
-  setStatus("trainStatus", "Training… keep this page open (" + tf.getBackend() + ").");
-  const t0 = performance.now();
-  try {
-    const r = await NN.trainAll(pos, oth, (ep, n, logs) => {
-      $("trainBar").style.width = (ep / n * 100) + "%";
-      setStatus("trainStatus", `Training… epoch ${ep}/${n} · accuracy ${(logs.acc * 100).toFixed(0)}%`);
-    });
-    if (r.error) { setStatus("trainStatus", r.error, "err"); $("trainBtn").disabled = false; return; }
-    if (trained && trained.net) trained.net.dispose();
-    trained = r;
-    try { await NN.save(r.net, r.dtw); } catch (e) { console.warn(e); }
-    const s = r.stats, secs = ((performance.now() - t0) / 1000).toFixed(0);
-    setStatus("trainStatus", `Trained in ${secs}s on ${s.trainExamples} examples and saved on this device. On held-out recordings it caught ${(s.recall*100).toFixed(0)}% of chants and wrongly accepted ${(s.falseAccept*100).toFixed(0)}% of other sounds.`, s.recall >= 0.8 && s.falseAccept <= 0.1 ? "good" : "err");
-    $("listenBtn").disabled = false; $("dlBtn").disabled = false;
-  } catch (e) {
-    setStatus("trainStatus", "Training failed: " + e.message, "err");
-  }
-  $("trainBtn").disabled = false;
-};
-$("dlBtn").onclick = async () => { if (trained) { try { await trained.net.save("downloads://om-verifier"); } catch(e) { setStatus("trainStatus", "Download failed: " + e.message, "err"); } } };
-$("wipeBtn").onclick = async () => {
-  stopAll(); pos = []; oth = []; trained = null; live = null;
-  ["om-pos","om-oth","om-dtw"].forEach(ls.del);
-  try { await tf.io.removeModel("indexeddb://om-verifier"); } catch(e) {}
-  $("listenBtn").disabled = true; $("dlBtn").disabled = true; $("trainBar").style.width = "0";
-  renderLists(); setStatus("trainStatus", "All recordings and the model were deleted.");
-};
-
-// ---- counting ----
-function onFrame(f) {
-  const r = live.push(f, parseFloat($("strict").value));
-  if (r.p !== null) {
-    const pc = Math.round(r.p * 100);
-    $("lastCheck").textContent = r.counted ? `✓ Counted (model: ${pc}% sure)` : `✗ Not counted (model: ${pc}% sure it was the mantra)`;
-    $("lastCheck").style.color = r.counted ? "var(--ok)" : "var(--mute)";
-  }
-  if (r.counted) { count++; renderCount(true); feedback(); }
+function parts(segs, thr) { return '<div class="parts">' + segs.map(v => `<span class="${v <= thr * 1.25 ? 'g' : 'b'}"></span>`).join('') + '</div>'; }
+function onCount(ev) {
+  S.count++; renderCount(true); save();
+  if (navigator.vibrate) navigator.vibrate(S.count % NB === 0 ? [80, 60, 200] : 25);
+  $('status').innerHTML = '<b>Counted</b> · match ' + Math.round(ev.match * 100) + '%' + parts(ev.segs, ev.thr);
 }
-function feedback() {
-  if ($("vibChk").checked && navigator.vibrate) { try { navigator.vibrate(40); } catch(e) {} }
-  if ($("beepChk").checked && ctx) {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.frequency.value = 880; g.gain.setValueAtTime(0.05, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
-    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.13);
-  }
+function onReject(ev) {
+  if (!ev.segs) return;
+  $('status').innerHTML = 'Heard something close, not the full mantra · not counted' + parts(ev.segs, ev.thr);
 }
-$("listenBtn").onclick = async () => {
-  if (mode === "listen") { stopAll(); return; }
-  if (!trained || mode !== "idle") return;
-  if (!(await ensureAudio())) return;
-  if (!trained) return;
-  live = NN.Live(trained.dtw, trained.net);
-  mode = "listen"; $("listenBtn").textContent = "Pause"; $("lastCheck").textContent = "";
-  setStatus("listenStatus", "Listening… chant at your own pace.");
-};
-$("plusBtn").onclick = () => { count++; renderCount(true); };
-$("minusBtn").onclick = () => { count = Math.max(0, count-1); renderCount(); };
-$("resetBtn").onclick = () => { count = 0; renderCount(); };
-$("strict").oninput = () => { $("strictVal").textContent = Math.round(parseFloat($("strict").value) * 100) + "%"; };
+async function toggleListen() {
+  const b = $('listen');
+  if (mode === 'count') { stopMic(); b.textContent = 'Start counting'; b.className = 'btn primary'; $('lvl').style.width = $('close').style.width = '0'; $('status').textContent = 'Paused.'; return; }
+  if (!model) { showTab('teach'); return; }
+  stopMic();
+  det = new E.Detector(model, { onCount, onReject }); det.sens = S.sens;
+  try { micStop = await openMic(f => det.pushRaw(f)); } catch (e) { micError($('status'), e); return; }
+  mode = 'count'; b.textContent = 'Listening · tap to pause'; b.className = 'btn live'; $('status').textContent = 'Chant at your normal pace.';
+  try { wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+  (function tick() { if (mode !== 'count') return; $('lvl').style.width = (det.level * 100) + '%'; $('close').style.width = (det.closeness * 100) + '%'; requestAnimationFrame(tick); })();
+}
+$('listen').onclick = toggleListen;
+$('minus').onclick = () => { if (S.count > 0) { S.count--; renderCount(); save(); } };
+$('plus').onclick = () => { S.count++; renderCount(true); save(); };
+$('reset').onclick = () => { if (S.count && confirm('Reset the count to 0?')) { S.count = 0; renderCount(); save(); } };
+$('sens').oninput = e => { S.sens = +e.target.value; if (det) det.sens = S.sens; save(); };
+document.addEventListener('visibilitychange', async () => { if (mode === 'count' && document.visibilityState === 'visible') { try { wake = await navigator.wakeLock.request('screen'); } catch (e) {} } });
 
-// ---- start ----
-(async () => {
-  renderCount(); loadData(); renderLists();
-  try { await tf.setBackend("webgl"); } catch(e) {}
-  try { await tf.ready(); } catch(e) { await tf.setBackend("cpu"); }
-  try {
-    const m = await NN.load();
-    if (m) { trained = m; $("listenBtn").disabled = false; $("dlBtn").disabled = false; setStatus("trainStatus", "A trained model is saved on this device. You can start counting, or retrain after adding recordings.", "good"); }
-  } catch (e) { /* no saved model */ }
+/* ---------- teach view ---------- */
+function rebuild() {
+  if (S.samples.length > E.MAX_TPL) S.samples = S.samples.slice(-E.MAX_TPL);
+  model = S.samples.length ? E.buildModel(S.samples, S.negs) : null;
+  if (det && mode === 'count' && model) { det = new E.Detector(model, { onCount, onReject }); det.sens = S.sens; }
+  renderTeach(); save();
+}
+function renderTeach() {
+  const pos = model ? model.pos : [], worst = pos.length >= 3 ? pos.indexOf(Math.max(...pos)) : -1, odd = model && model.quality === 'weak' ? worst : -1;
+  $('posChips').innerHTML = S.samples.map((s, i) => `<span class="chip${i === odd ? ' odd' : ''}">Chant ${i + 1} · ${(s.n / 100).toFixed(1)}s<button data-p="${i}" aria-label="Delete chant ${i + 1}">×</button></span>`).join('');
+  $('negChips').innerHTML = S.negs.map((s, i) => `<span class="chip">Clip ${i + 1} · ${(s.n / 100).toFixed(1)}s<button data-n="${i}" aria-label="Delete clip ${i + 1}">×</button></span>`).join('');
+  const ms = $('modelState'), n = S.samples.length;
+  if (!model) { ms.className = ''; ms.textContent = ''; }
+  else if (model.quality === 'single') { ms.className = 'warn'; ms.textContent = 'Working from 1 sample. Add 2 to 4 more for steadier counting.'; }
+  else if (model.quality === 'weak') { ms.className = 'bad'; ms.textContent = 'These samples differ a lot from each other' + (odd >= 0 ? ` (chant ${odd + 1} is the odd one out)` : '') + '. Delete the odd one or record again somewhere quieter.'; }
+  else { ms.className = 'good'; ms.textContent = `Ready: trained on ${n} chants.` + (n < 3 ? ' One or two more will make it steadier.' : ''); }
+  $('recNeg').disabled = !model;
+  $('listen').textContent = mode === 'count' ? 'Listening · tap to pause' : model ? 'Start counting' : 'Teach it your chant first';
+}
+async function record(kind) {
+  const btn = $(kind === 'pos' ? 'recPos' : 'recNeg'), idle = kind === 'pos' ? 'Record chants' : 'Record a “do not count” clip';
+  if (mode === kind) {
+    stopMic(); btn.textContent = idle; btn.classList.remove('live'); $('lvlT').style.width = '0';
+    const rows = record.rows, n = rows.length, raw = new Float32Array(n * E.RAWD); rows.forEach((r, i) => raw.set(r, i * E.RAWD));
+    if (kind === 'pos') {
+      const segs = E.segmentUtterances(raw, n);
+      if (!segs.length) { $('modelState').className = 'bad'; $('modelState').textContent = 'No clear chant found. Chant a little louder and leave a short pause between chants.'; return; }
+      segs.forEach(([a, b]) => S.samples.push({ n: b - a, raw: raw.slice(a * E.RAWD, b * E.RAWD) }));
+    } else if (n > 40) { S.negs.push({ n: Math.min(n, 2000), raw: raw.slice(0, Math.min(n, 2000) * E.RAWD) }); S.negs = S.negs.slice(-4); }
+    rebuild(); return;
+  }
+  stopMic(); $('listen').className = 'btn primary';
+  record.rows = []; let peak = -1e9;
+  try { micStop = await openMic(f => { record.rows.push(Float32Array.from(f)); const e = f[E.RAWD - 1]; peak = Math.max(e, peak - 0.003); $('lvlT').style.width = Math.max(0, 100 * (1 + (e - peak) / 7)) + '%'; }); }
+  catch (e) { micError($('modelState'), e); $('modelState').className = 'bad'; return; }
+  mode = kind; btn.textContent = 'Recording · tap to finish'; btn.classList.add('live');
+}
+$('recPos').onclick = () => record('pos');
+$('recNeg').onclick = () => record('neg');
+$('posChips').onclick = e => { const i = e.target.dataset.p; if (i !== undefined) { S.samples.splice(+i, 1); rebuild(); } };
+$('negChips').onclick = e => { const i = e.target.dataset.n; if (i !== undefined) { S.negs.splice(+i, 1); rebuild(); } };
+$('wipe').onclick = () => { if (confirm('Delete all recorded samples? The count is kept.')) { S.samples = []; S.negs = []; rebuild(); } };
+
+/* ---------- tabs + boot ---------- */
+function showTab(t) {
+  if ((t === 'teach' && mode === 'count') || (t === 'count' && mode && mode !== 'count')) { stopMic(); $('recPos').textContent = 'Record chants'; $('recNeg').textContent = 'Record a “do not count” clip'; $('recPos').classList.remove('live'); $('recNeg').classList.remove('live'); $('listen').className = 'btn primary'; }
+  $('viewCount').hidden = t !== 'count'; $('viewTeach').hidden = t !== 'teach';
+  $('tabCount').setAttribute('aria-selected', t === 'count'); $('tabTeach').setAttribute('aria-selected', t === 'teach');
+  renderTeach();
+}
+$('tabCount').onclick = () => showTab('count'); $('tabTeach').onclick = () => showTab('teach');
+load(); $('sens').value = S.sens; model = S.samples.length ? E.buildModel(S.samples, S.negs) : null;
+renderCount(); showTab(model ? 'count' : 'teach');
+window.__om = { S, get model() { return model; } };
 })();
 </script>
 </body>
