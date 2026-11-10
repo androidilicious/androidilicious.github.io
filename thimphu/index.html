@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thimphu Live 3D</title>
+<style>
+  :root { --bg: rgba(16,20,26,.82); --line: rgba(255,255,255,.12); --txt: #e9edf1; --mut: #9aa6b2; --acc: #e3a72f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0e12; color: var(--txt);
+    font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .lbl { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 11px; font-weight: 600; color: #fff;
+    text-shadow: 0 1px 3px #000, 0 0 2px #000; transform: translate(-999px,-999px); }
+  .lbl.minor { font-weight: 400; font-size: 10.5px; color: #dfe6ec; }
+  .lbl::before { content: ""; display: block; width: 1px; height: 14px; background: rgba(255,255,255,.7); margin: 0 auto 2px; }
+  .panel { position: fixed; background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 12px 14px; }
+  #left { top: 12px; left: 12px; width: 318px; max-height: calc(100% - 60px); overflow: auto; }
+  #right { top: 12px; right: 12px; width: 268px; max-height: calc(100% - 60px); overflow: auto; }
+  h1 { font-size: 16px; margin: 0 0 2px; letter-spacing: .2px; }
+  h2 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .9px; color: var(--mut); margin: 14px 0 6px; font-weight: 600; }
+  .sub { color: var(--mut); font-size: 12px; }
+  .now { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .tile { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
+  .tile b { display: block; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile span { color: var(--mut); font-size: 11px; }
+  .row { display: grid; grid-template-columns: 10px 1fr; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #6b7682; margin-top: 5px; }
+  .dot.ok { background: #46c06f; } .dot.fail { background: #e2574c; } .dot.wait { background: var(--acc); animation: p 1s infinite alternate; }
+  @keyframes p { to { opacity: .35; } }
+  .row .nm { font-weight: 600; }
+  .pill { display: inline-block; font-size: 9.5px; letter-spacing: .6px; padding: 0 5px; border-radius: 4px; margin-left: 5px;
+    border: 1px solid var(--line); color: var(--mut); vertical-align: 1px; }
+  .pill.real { color: #7fd69b; border-color: rgba(127,214,155,.4); }
+  .pill.live { color: #7fc0ef; border-color: rgba(127,192,239,.4); }
+  .pill.sim { color: #f0b85a; border-color: rgba(240,184,90,.4); }
+  .row .dt { color: var(--mut); font-size: 11.5px; }
+  label.ck { display: flex; align-items: center; gap: 7px; padding: 2px 0; cursor: pointer; }
+  input[type=range] { width: 100%; accent-color: var(--acc); }
+  input[type=checkbox] { accent-color: var(--acc); }
+  button, select, input[type=text] { font: inherit; color: var(--txt); background: rgba(255,255,255,.07); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 9px; }
+  button { cursor: pointer; } button:hover { background: rgba(255,255,255,.14); }
+  button.on { background: var(--acc); color: #17130a; border-color: var(--acc); }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+  input[type=text] { width: 100%; }
+  .tl { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  #legend { display: flex; gap: 8px; font-size: 11px; color: var(--mut); margin: 4px 0 0 22px; }
+  #legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 3px; vertical-align: 2px; }
+  #attr { position: fixed; left: 12px; bottom: 8px; right: 12px; font-size: 10.5px; color: #c4ccd4; text-shadow: 0 1px 2px #000; pointer-events: none; }
+  #attr a { color: inherit; pointer-events: auto; }
+  #info { bottom: 34px; left: 50%; transform: translateX(-50%); min-width: 240px; max-width: 420px; display: none; }
+  #info .x { float: right; cursor: pointer; color: var(--mut); padding: 0 0 0 10px; }
+  #info a { color: var(--acc); }
+  .tog { display: none; position: fixed; top: 12px; z-index: 5; }
+  @media (max-width: 760px) {
+    .panel#left, .panel#right { width: auto; left: 8px; right: 8px; top: 48px; max-height: 62%; display: none; }
+    .panel.show { display: block !important; }
+    .tog { display: block; } #togL { left: 8px; } #togR { right: 8px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="labels"></div>
+<button class="tog" id="togL">Status</button>
+<button class="tog" id="togR">Controls</button>
+
+<div class="panel" id="left">
+  <h1>Thimphu, live in 3D</h1>
+  <div class="sub"><span id="clock">--:--</span> Thimphu time · <span id="cond">loading conditions</span></div>
+  <div class="now">
+    <div class="tile"><b id="tTemp">–</b><span>Temperature</span></div>
+    <div class="tile"><b id="tWind">–</b><span>Wind</span></div>
+    <div class="tile"><b id="tPm">–</b><span>PM2.5 (modelled)</span></div>
+    <div class="tile"><b id="tVeh">–</b><span>Vehicles (simulated)</span></div>
+  </div>
+  <h2>Data layers</h2>
+  <div id="status"></div>
+</div>
+
+<div class="panel" id="right">
+  <h2 style="margin-top:0">Time of day</h2>
+  <div class="tl"><span id="simTime">Live</span><button id="btnLive" class="on">Live</button></div>
+  <input type="range" id="hour" min="0" max="24" step="0.25" value="12">
+  <h2>Layers</h2>
+  <label class="ck"><input type="checkbox" id="ckB" checked> Buildings</label>
+  <label class="ck"><input type="checkbox" id="ckV" checked> Vehicles</label>
+  <label class="ck"><input type="checkbox" id="ckC" checked> Congestion colours on roads</label>
+  <div id="legend"><span><i style="background:#3fbf6a"></i>free</span><span><i style="background:#e8b23a"></i>slow</span><span><i style="background:#e0483c"></i>heavy</span></div>
+  <label class="ck"><input type="checkbox" id="ckL" checked> Place labels</label>
+  <label class="ck"><input type="checkbox" id="ckW" checked> Weather effects</label>
+  <h2>Views</h2>
+  <div class="btns" id="views"><button data-v="overview">Overview</button></div>
+  <h2>Extent</h2>
+  <select id="extent"><option value="core">City core (faster)</option><option value="full">Full valley (slower)</option></select>
+  <button id="btnRefresh" title="Download the map again from OpenStreetMap">Refresh map</button>
+  <h2>Live traffic key (optional)</h2>
+  <input type="text" id="ttKey" placeholder="TomTom Traffic API key" autocomplete="off">
+  <div class="sub" style="margin-top:4px">Experimental. With a key, measured speeds replace the simulation on roads where TomTom returns data. Coverage in Thimphu is unverified. The key stays in this browser.</div>
+  <div class="btns" style="margin-top:6px"><button id="ttSave">Save key</button><button id="ttClear">Remove</button></div>
+</div>
+
+<div class="panel" id="info"><span class="x" id="infoX">✕</span><div id="infoBody"></div></div>
+<div id="attr">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> · Elevation: Terrain Tiles on AWS (Mapzen; SRTM and other sources) · Weather and air quality: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Traffic is simulated unless a key is set</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const mix = (a, b, t) => a + (b - a) * t;
+const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+/* ---------- extent and projection ---------- */
+const EXTENTS = {
+  core: { s: 27.440, w: 89.612, n: 27.508, e: 89.668 },
+  full: { s: 27.415, w: 89.595, n: 27.545, e: 89.690 }
+};
+let extKey = 'core';
+try { if (location.hash === '#full') extKey = 'full'; } catch (e) {}
+const EXT = EXTENTS[extKey];
+const LAT0 = (EXT.s + EXT.n) / 2, LON0 = (EXT.w + EXT.e) / 2;
+const MX = 111320 * Math.cos(LAT0 * Math.PI / 180), MZ = 110574;
+const toX = lon => (lon - LON0) * MX, toZ = lat => -(lat - LAT0) * MZ;
+const toLon = x => LON0 + x / MX, toLat = z => LAT0 - z / MZ;
+const MARGIN = 2200, CELL = 30;
+const xmin = toX(EXT.w) - MARGIN, xmax = toX(EXT.e) + MARGIN, zmin = toZ(EXT.n) - MARGIN, zmax = toZ(EXT.s) + MARGIN;
+const nx = Math.ceil((xmax - xmin) / CELL) + 1, nz = Math.ceil((zmax - zmin) / CELL) + 1;
+const H = new Float32Array(nx * nz);          // world y (metres above E0)
+let E0 = 2300, Emax = 2300, terrainReal = false;
+
+function heightAt(x, z) {
+  const fx = clamp((x - xmin) / CELL, 0, nx - 1.001), fz = clamp((z - zmin) / CELL, 0, nz - 1.001);
+  const i = fx | 0, j = fz | 0, u = fx - i, v = fz - j, o = j * nx + i;
+  const h00 = H[o], h10 = H[o + 1], h01 = H[o + nx], h11 = H[o + nx + 1];
+  if (u + v <= 1) return h00 + (h10 - h00) * u + (h01 - h00) * v;   // same triangles as the mesh
+  return h11 + (h01 - h11) * (1 - u) + (h10 - h11) * (1 - v);
+}
+
+/* ---------- status panel ---------- */
+const ROWS = [
+  ['elev', 'Elevation', 'real', 'REAL'], ['osm', 'Roads, buildings, river', 'real', 'REAL'],
+  ['hts', 'Building heights', 'sim', 'PART ESTIMATED'], ['wx', 'Weather', 'live', 'LIVE'],
+  ['aq', 'Air quality', 'live', 'LIVE · MODELLED'], ['sun', 'Sun position', 'live', 'LIVE · COMPUTED'],
+  ['trf', 'Traffic', 'sim', 'SIMULATED']
+];
+const statusEl = $('status');
+ROWS.forEach(([id, nm, cls, tag]) => {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = '<div class="dot" id="d_' + id + '"></div><div><span class="nm">' + nm + '</span><span class="pill ' + cls + '" id="p_' + id + '">' + tag + '</span><div class="dt" id="t_' + id + '">waiting</div></div>';
+  statusEl.appendChild(r);
+});
+function setStatus(id, state, text) { $('d_' + id).className = 'dot ' + state; $('t_' + id).textContent = text; }
+function setPill(id, cls, tag) { const p = $('p_' + id); p.className = 'pill ' + cls; p.textContent = tag; }
+
+/* ---------- scene ---------- */
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8fb6dc);
+scene.fog = new THREE.FogExp2(0x8fb6dc, 0.00004);
+const camera = new THREE.PerspectiveCamera(50, 1, 10, 70000);
+camera.position.set(-1500, 3800, 5200);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 60; controls.maxDistance = 26000;
+controls.target.set(0, 0, 0);
+const hemi = new THREE.HemisphereLight(0xdfeaf5, 0x4a4a3a, 0.8); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.0); scene.add(sun);
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+
+/* ---------- elevation ---------- */
+const TZOOM = 12, TN = Math.pow(2, TZOOM);
+const lon2tx = lon => (lon + 180) / 360 * TN;
+const lat2ty = lat => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * TN; };
+function loadImg(url) {
+  return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile failed')); im.src = url; });
+}
+async function loadTerrain() {
+  setStatus('elev', 'wait', 'downloading terrain tiles');
+  const lonA = toLon(xmin), lonB = toLon(xmax), latN = toLat(zmin), latS = toLat(zmax);
+  const tx0 = Math.floor(lon2tx(lonA)), tx1 = Math.floor(lon2tx(lonB)), ty0 = Math.floor(lat2ty(latN)), ty1 = Math.floor(lat2ty(latS));
+  try {
+    const jobs = [];
+    for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++)
+      jobs.push(loadImg('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/' + TZOOM + '/' + tx + '/' + ty + '.png').then(im => ({ im, tx, ty })));
+    const tiles = await Promise.all(jobs);
+    const W = (tx1 - tx0 + 1) * 256, Hh = (ty1 - ty0 + 1) * 256;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = Hh;
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    tiles.forEach(t => ctx.drawImage(t.im, (t.tx - tx0) * 256, (t.ty - ty0) * 256));
+    const px = ctx.getImageData(0, 0, W, Hh).data;
+    const el = (i, j) => { const o = (clamp(j, 0, Hh - 1) * W + clamp(i, 0, W - 1)) * 4; return px[o] * 256 + px[o + 1] + px[o + 2] / 256 - 32768; };
+    const raw = new Float32Array(nx * nz); let lo = 1e9, hi = -1e9;
+    for (let j = 0; j < nz; j++) {
+      const fy = (lat2ty(toLat(zmin + j * CELL)) - ty0) * 256 - 0.5, j0 = Math.floor(fy), v = fy - j0;
+      for (let i = 0; i < nx; i++) {
+        const fx = (lon2tx(toLon(xmin + i * CELL)) - tx0) * 256 - 0.5, i0 = Math.floor(fx), u = fx - i0;
+        const e = mix(mix(el(i0, j0), el(i0 + 1, j0), u), mix(el(i0, j0 + 1), el(i0 + 1, j0 + 1), u), v);
+        raw[j * nx + i] = e; if (e < lo) lo = e; if (e > hi) hi = e;
+      }
+    }
+    if (!(hi > lo) || !isFinite(lo)) throw new Error('empty elevation data');
+    E0 = lo; Emax = hi; for (let k = 0; k < raw.length; k++) H[k] = raw[k] - lo;
+    terrainReal = true;
+    setStatus('elev', 'ok', Math.round(lo) + '–' + Math.round(hi) + ' m above sea level, ' + CELL + ' m grid, no vertical exaggeration');
+  } catch (err) {
+    H.fill(0); terrainReal = false;
+    setStatus('elev', 'fail', 'Could not load elevation (' + err.message + '). Showing flat ground.');
+  }
+  buildTerrainMesh();
+}
+function buildTerrainMesh() {
+  const pos = new Float32Array(nx * nz * 3), col = new Float32Array(nx * nz * 3);
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i, y = H[k];
+    pos[k * 3] = xmin + i * CELL; pos[k * 3 + 1] = y; pos[k * 3 + 2] = zmin + j * CELL;
+    const i0 = Math.max(i - 1, 0), i1 = Math.min(i + 1, nx - 1), j0 = Math.max(j - 1, 0), j1 = Math.min(j + 1, nz - 1);
+    const sl = Math.hypot((H[j * nx + i1] - H[j * nx + i0]) / ((i1 - i0) * CELL), (H[j1 * nx + i] - H[j0 * nx + i]) / ((j1 - j0) * CELL));
+    const ts = sstep(0.07, 0.32, sl), tr = sstep(3350, 3900, y + E0), n = (hash(k) - 0.5) * 0.05;
+    let r = mix(0.50, 0.19, ts), g = mix(0.53, 0.31, ts), b = mix(0.36, 0.17, ts);
+    r = mix(r, 0.47, tr) + n; g = mix(g, 0.44, tr) + n; b = mix(b, 0.38, tr) + n;
+    col[k * 3] = r; col[k * 3 + 1] = g; col[k * 3 + 2] = b;
+  }
+  const idx = new Uint32Array((nx - 1) * (nz - 1) * 6); let q = 0;
+  for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) {
+    const a = j * nx + i, b = a + nx, c = a + 1, d = b + 1;
+    idx[q++] = a; idx[q++] = b; idx[q++] = c; idx[q++] = c; idx[q++] = b; idx[q++] = d;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  m.name = 'terrain'; scene.add(m);
+  controls.target.set(0, heightAt(0, 0), 0);
+  camera.position.set(-1800, heightAt(0, 0) + 3600, 5600);
+}
+
+/* ---------- OpenStreetMap ---------- */
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+const BB = '(' + EXT.s + ',' + EXT.w + ',' + EXT.n + ',' + EXT.e + ')';
+const CACHE_KEY = 'osm:' + extKey + ':v1';
+function idb() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('thimphu3d', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+async function cacheGet(k) {
+  try { const db = await idb(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); }
+  catch (e) { return null; }
+}
+async function cachePut(k, v) {
+  try { const db = await idb(); await new Promise(res => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; t.onabort = res; }); }
+  catch (e) {}
+}
+async function fetchOSM() {
+  const c = await cacheGet(CACHE_KEY);
+  if (c && c.data && Date.now() - c.ts < 7 * 864e5) return { data: c.data, ts: c.ts, cached: true };
+  const q = '[out:json][timeout:120];(' +
+    'way["building"]' + BB + ';relation["building"]["type"="multipolygon"]' + BB + ';' +
+    'way["highway"]' + BB + ';way["waterway"~"^(river|stream|canal)$"]' + BB + ';way["natural"="water"]' + BB + ';' +
+    'way["leisure"~"^(park|pitch|stadium|garden|golf_course)$"]' + BB + ';' +
+    'node["place"~"^(suburb|neighbourhood|quarter|village|town|city)$"]' + BB + ';' +
+    'nwr["tourism"~"^(attraction|museum|viewpoint)$"]["name"]' + BB + ';nwr["historic"]["name"]' + BB + ';' +
+    ');out geom qt;';
+  let last = new Error('no server reachable');
+  for (const url of OVERPASS) {
+    try {
+      const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      if (!data || !Array.isArray(data.elements) || !data.elements.length) throw new Error('empty response');
+      const ts = Date.now(); await cachePut(CACHE_KEY, { ts, data });
+      return { data, ts, cached: false };
+    } catch (e) { last = e; }
+  }
+  throw last;
+}
+
+/* geometry helpers */
+function Buf() { this.p = []; this.n = []; this.c = []; }
+Buf.prototype.tri = function (a, b, c, nrm, col) {     // a,b,c = [x,y,z]; winding fixed so the face normal agrees with nrm
+  const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+  const d = (uy * vz - uz * vy) * nrm[0] + (uz * vx - ux * vz) * nrm[1] + (ux * vy - uy * vx) * nrm[2];
+  if (d < 0) { const t = b; b = c; c = t; }
+  this.p.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+  for (let k = 0; k < 3; k++) { this.n.push(nrm[0], nrm[1], nrm[2]); this.c.push(col[0], col[1], col[2]); }
+};
+Buf.prototype.mesh = function (mat, name) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.p), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(this.n), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(this.c), 3));
+  const m = new THREE.Mesh(g, mat); m.name = name; return m;
+};
+const UP = [0, 1, 0];
+function ringOf(geom) {
+  const pts = [];
+  for (const g of geom) { if (!g) continue; const x = toX(g.lon), z = toZ(g.lat); const l = pts[pts.length - 1]; if (!l || Math.abs(l[0] - x) > 0.05 || Math.abs(l[1] - z) > 0.05) pts.push([x, z]); }
+  return pts;
+}
+function closedRing(pts) {
+  if (pts.length > 3) { const a = pts[0], b = pts[pts.length - 1]; if (Math.abs(a[0] - b[0]) < 0.1 && Math.abs(a[1] - b[1]) < 0.1) return pts.slice(0, -1); }
+  return null;
+}
+function signedArea(r) { let a = 0; for (let i = 0, n = r.length; i < n; i++) { const p = r[i], q = r[(i + 1) % n]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
+function triangulate(r) { try { return THREE.ShapeUtils.triangulateShape(r.map(p => new THREE.Vector2(p[0], p[1])), []); } catch (e) { return []; } }
+function densify(pts, step) {
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / step));
+    for (let k = 1; k <= n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+  }
+  return out;
+}
+function ribbon(buf, pts, width, lift, col) {          // pts already densified; returns [firstVertex, vertexCount]
+  const v0 = buf.p.length / 3, hw = width / 2; let pl = null, pr = null;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, pts.length - 1)];
+    let tx = b[0] - a[0], tz = b[1] - a[1]; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
+    const lx = tz, lz = -tx, p = pts[i];
+    const l = [p[0] + lx * hw, 0, p[1] + lz * hw], r = [p[0] - lx * hw, 0, p[1] - lz * hw];
+    const yc = heightAt(p[0], p[1]);
+    l[1] = Math.max(heightAt(l[0], l[2]), yc - 0.4) + lift; r[1] = Math.max(heightAt(r[0], r[2]), yc - 0.4) + lift;
+    if (pl) { buf.tri(pl, pr, l, UP, col); buf.tri(pr, r, l, UP, col); }
+    pl = l; pr = r;
+  }
+  return [v0, buf.p.length / 3 - v0];
+}
+function drape(buf, ring, lift, col) {
+  const t = triangulate(ring);
+  for (const f of t) { const v = f.map(i => [ring[i][0], heightAt(ring[i][0], ring[i][1]) + lift, ring[i][1]]); buf.tri(v[0], v[1], v[2], UP, col); }
+}
+
+/* city state */
+const ROAD = {               // width m, free speed km/h, traffic weight
+  motorway: [12, 50, 6], trunk: [12, 50, 6], primary: [11, 40, 6], secondary: [9, 35, 4], tertiary: [8, 30, 3],
+  unclassified: [6, 25, 1.2], residential: [6, 25, 1], living_street: [5, 15, 0.6], service: [4, 15, 0.3]
+};
+const PATHS = { footway: 2, path: 2, steps: 2, pedestrian: 4, track: 3, cycleway: 2 };
+const ASPHALT = [0.23, 0.24, 0.26], ASPHALT_MAIN = [0.30, 0.31, 0.33], PATHCOL = [0.62, 0.55, 0.42];
+const RAMP = [[0.25, 0.75, 0.42], [0.91, 0.70, 0.23], [0.88, 0.28, 0.24], [0.55, 0.10, 0.12]];
+const city = { edges: [], adj: new Map(), bMesh: null, roadMesh: null, triB: null, bInfo: [], labels: [], cumW: null, totalKm: 0, vehMesh: null };
+const MAXV = 2600, vehicles = [];
+
+function bHeight(tags, area) {
+  const h = parseFloat(tags.height); if (h > 0) return [h, 'height tag'];
+  const lv = parseFloat(tags['building:levels']); if (lv > 0) return [lv * 3.2 + 1, 'levels tag (' + lv + ')'];
+  const est = area < 60 ? 1 : area < 150 ? 2 : area < 400 ? 4 : 5;
+  return [est * 3.2 + 1, 'estimated from footprint'];
+}
+const WALLS = [[0.93, 0.90, 0.83], [0.88, 0.85, 0.78], [0.95, 0.93, 0.88], [0.84, 0.80, 0.72]];
+const ROOFS = [[0.17, 0.34, 0.25], [0.46, 0.17, 0.15], [0.36, 0.38, 0.42], [0.20, 0.38, 0.30], [0.52, 0.22, 0.16]];
+const SACRED = /dzong|lhakhang|chorten|goemba|gompa|monastery|temple|dratshang/i;
+
+function addBuilding(bb, triB, ring, tags, id, type) {
+  if (!ring || ring.length < 3) return false;
+  let area = signedArea(ring); if (area < 0) { ring = ring.slice().reverse(); area = -area; }
+  if (area < 8) return false;
+  const [h, src] = bHeight(tags, area);
+  let ymin = 1e9, ymax = -1e9;
+  for (const p of ring) { const y = heightAt(p[0], p[1]); if (y < ymin) ymin = y; if (y > ymax) ymax = y; }
+  const base = ymin - 0.5, top = ymax + h, bi = city.bInfo.length;
+  const sacred = SACRED.test((tags.name || '') + ' ' + (tags.building || '')) || tags.amenity === 'place_of_worship';
+  const wall = sacred ? [0.97, 0.96, 0.93] : WALLS[bi % WALLS.length];
+  const roof = sacred ? [0.60, 0.16, 0.12] : ROOFS[(bi * 7 + 3) % ROOFS.length];
+  const t0 = bb.p.length / 9;
+  for (let i = 0, n = ring.length; i < n; i++) {
+    const p = ring[i], q = ring[(i + 1) % n], dx = q[0] - p[0], dz = q[1] - p[1], L = Math.hypot(dx, dz); if (L < 0.05) continue;
+    const nrm = [dz / L, 0, -dx / L];
+    const a = [p[0], base, p[1]], b = [q[0], base, q[1]], c = [q[0], top, q[1]], d = [p[0], top, p[1]];
+    bb.tri(a, b, c, nrm, wall); bb.tri(a, c, d, nrm, wall);
+  }
+  for (const f of triangulate(ring)) bb.tri([ring[f[0]][0], top, ring[f[0]][1]], [ring[f[1]][0], top, ring[f[1]][1]], [ring[f[2]][0], top, ring[f[2]][1]], UP, roof);
+  const t1 = bb.p.length / 9; for (let t = t0; t < t1; t++) triB.push(bi);
+  city.bInfo.push({ id, type, name: tags['name:en'] || tags.name || '', kind: tags.building, h, src, area, elev: Math.round(ymin + E0) });
+  return src !== 'estimated from footprint';
+}
+
+function buildCity(data) {
+  const els = data.elements, bb = new Buf(), rb = new Buf(), wb = new Buf(), gb = new Buf(), triB = [];
+  let nB = 0, nTagged = 0, nRoads = 0; const labelCand = [];
+  const use = new Map(), drivable = [];
+  const nameOf = t => t && (t['name:en'] || t.name);
+  const center = e => {
+    if (e.type === 'node') return [toX(e.lon), toZ(e.lat)];
+    if (e.bounds) return [toX((e.bounds.minlon + e.bounds.maxlon) / 2), toZ((e.bounds.minlat + e.bounds.maxlat) / 2)];
+    if (e.geometry && e.geometry.length) { let x = 0, z = 0, n = 0; for (const g of e.geometry) if (g) { x += toX(g.lon); z += toZ(g.lat); n++; } return n ? [x / n, z / n] : null; }
+    return null;
+  };
+  for (const e of els) {
+    const t = e.tags || {};
+    const nm = nameOf(t);
+    if (nm && (t.place || t.tourism || t.historic || SACRED.test(nm) || /stadium|clock tower|hospital|museum|library/i.test(nm))) {
+      const c = center(e); if (c) labelCand.push({ name: nm, x: c[0], z: c[1], major: !t.place && (!!t.tourism || !!t.historic || SACRED.test(nm)), strong: /dzong|dordenma|memorial|clock tower|stadium/i.test(nm) });
+    }
+    if (e.type === 'relation' && t.building && e.members) {
+      for (const m of e.members) if (m.type === 'way' && m.role !== 'inner' && m.geometry) { const r = closedRing(ringOf(m.geometry)); if (r && addBuilding(bb, triB, r, t, e.id, 'relation')) nTagged++; }
+      continue;
+    }
+    if (e.type !== 'way' || !e.geometry) continue;
+    if (t.building) { const r = closedRing(ringOf(e.geometry)); if (r && addBuilding(bb, triB, r, t, e.id, 'way')) nTagged++; continue; }
+    if (t.highway) {
+      const cls = String(t.highway).replace(/_link$/, '');
+      if (ROAD[cls] && e.nodes && e.nodes.length === e.geometry.length && t.access !== 'private') { drivable.push([e, cls]); for (const n of e.nodes) use.set(n, (use.get(n) || 0) + 1); nRoads++; }
+      else if (PATHS[cls] || ROAD[cls]) { const pts = ringOf(e.geometry); if (pts.length > 1) ribbon(rb, densify(pts, 8), PATHS[cls] || ROAD[cls][0], 0.5, PATHS[cls] ? PATHCOL : ASPHALT); }
+      continue;
+    }
+    if (t.waterway) { const pts = ringOf(e.geometry); if (pts.length > 1) ribbon(wb, densify(pts, 10), t.waterway === 'river' ? (parseFloat(t.width) || 24) : 4, 0.25, [0.30, 0.50, 0.62]); continue; }
+    if (t.natural === 'water') { const r = closedRing(ringOf(e.geometry)); if (r && r.length >= 3) drape(wb, r, 0.3, [0.30, 0.50, 0.62]); continue; }
+    if (t.leisure) { const r = closedRing(ringOf(e.geometry)); if (r && r.length >= 3 && Math.abs(signedArea(r)) < 80000) drape(gb, r, 0.2, t.leisure === 'pitch' || t.leisure === 'stadium' ? [0.33, 0.58, 0.30] : [0.36, 0.52, 0.28]); }
+  }
+  nB = city.bInfo.length;
+  /* road graph: split ways where they meet */
+  for (const [e, cls] of drivable) {
+    const t = e.tags, oneway = t.oneway === 'yes' || t.oneway === '-1' || t.junction === 'roundabout';
+    let nodes = e.nodes, geom = e.geometry; if (t.oneway === '-1') { nodes = nodes.slice().reverse(); geom = geom.slice().reverse(); }
+    let s = 0;
+    for (let i = 1; i < nodes.length; i++) {
+      if (i < nodes.length - 1 && use.get(nodes[i]) < 2) continue;
+      const raw = []; for (let k = s; k <= i; k++) if (geom[k]) raw.push([toX(geom[k].lon), toZ(geom[k].lat)]);
+      const a = nodes[s], b = nodes[i]; s = i;
+      if (raw.length < 2) continue;
+      const pts = densify(raw, 8), n = pts.length, p3 = new Float32Array(n * 3), cum = new Float32Array(n);
+      for (let k = 0; k < n; k++) { p3[k * 3] = pts[k][0]; p3[k * 3 + 1] = heightAt(pts[k][0], pts[k][1]) + 0.6; p3[k * 3 + 2] = pts[k][1]; if (k) cum[k] = cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]); }
+      const len = cum[n - 1]; if (len < 0.5) continue;
+      const base = ROAD[cls][2] >= 3 ? ASPHALT_MAIN : ASPHALT;
+      const [v0, vn] = ribbon(rb, pts, ROAD[cls][0], 0.6, base);
+      const ed = { a, b, p3, cum, len, cls, w: ROAD[cls][0], spd: ROAD[cls][1] / 3.6, wt: ROAD[cls][2], oneway, name: nameOf(t) || '', count: 0, f: 1, measured: null, bucket: -1, v0, vn, base };
+      city.edges.push(ed);
+      if (!city.adj.has(a)) city.adj.set(a, []); if (!city.adj.has(b)) city.adj.set(b, []);
+      city.adj.get(a).push({ e: ed, dir: 1 }); if (!oneway) city.adj.get(b).push({ e: ed, dir: -1 });
+    }
+  }
+  let acc = 0; city.cumW = new Float64Array(city.edges.length);
+  city.edges.forEach((e, i) => { acc += e.len * e.wt; city.cumW[i] = acc; city.totalKm += e.len / 1000; });
+
+  const off = (f, u) => ({ polygonOffset: true, polygonOffsetFactor: f, polygonOffsetUnits: u });
+  if (gb.p.length) scene.add(gb.mesh(new THREE.MeshLambertMaterial(Object.assign({ vertexColors: true }, off(-1, -1))), 'green'));
+  if (wb.p.length) scene.add(wb.mesh(new THREE.MeshLambertMaterial(Object.assign({ vertexColors: true }, off(-2, -2))), 'water'));
+  if (rb.p.length) { city.roadMesh = rb.mesh(new THREE.MeshLambertMaterial(Object.assign({ vertexColors: true }, off(-3, -3))), 'roads'); scene.add(city.roadMesh); }
+  if (bb.p.length) { city.bMesh = bb.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, emissive: 0xffc070, emissiveIntensity: 0 }), 'buildings'); scene.add(city.bMesh); }
+  city.triB = Uint32Array.from(triB);
+
+  /* vehicles */
+  const vg = new THREE.BoxGeometry(6.4, 2.6, 2.9); vg.translate(0, 1.3, 0);
+  city.vehMesh = new THREE.InstancedMesh(vg, new THREE.MeshLambertMaterial({ emissive: 0xfff0c0, emissiveIntensity: 0 }), MAXV);
+  city.vehMesh.frustumCulled = false; city.vehMesh.count = 0; city.vehMesh.name = 'vehicles';
+  const VC = [0xf2f2f0, 0xc9ccd1, 0x8b9099, 0xb5372f, 0x2f5fa8, 0x23262b, 0xe7e2d2], cc = new THREE.Color();
+  for (let i = 0; i < MAXV; i++) { city.vehMesh.setColorAt(i, cc.setHex(VC[(hash(i + 5) * VC.length) | 0])); vehicles.push({ e: null, dir: 1, s: 0, k: 0.8 + hash(i) * 0.4 }); }
+  if (city.edges.length) { vehicles.forEach(respawn); scene.add(city.vehMesh); }
+
+  /* labels and views */
+  const seen = new Set(); labelCand.sort((a, b) => (b.strong - a.strong) || (b.major - a.major));
+  for (const l of labelCand) {
+    const key = l.name.toLowerCase(); if (seen.has(key) || city.labels.length >= 34) continue; seen.add(key);
+    if (l.x < toX(EXT.w) || l.x > toX(EXT.e) || l.z < toZ(EXT.n) || l.z > toZ(EXT.s)) continue;
+    const el = document.createElement('div'); el.className = 'lbl' + (l.major ? '' : ' minor'); el.textContent = l.name; $('labels').appendChild(el);
+    city.labels.push({ el, name: l.name, major: l.major, strong: l.strong, v: new THREE.Vector3(l.x, heightAt(l.x, l.z) + 45, l.z) });
+  }
+  city.labels.filter(l => l.strong).slice(0, 5).forEach(l => {
+    const b = document.createElement('button'); b.textContent = l.name.length > 22 ? l.name.slice(0, 21) + '…' : l.name;
+    b.onclick = () => flyTo(l.v.x, l.v.z, 900); $('views').appendChild(b);
+  });
+
+  setStatus('osm', 'ok', nB.toLocaleString() + ' buildings, ' + nRoads.toLocaleString() + ' road ways (' + Math.round(city.totalKm) + ' km drivable), from OpenStreetMap');
+  const pct = nB ? Math.round(nTagged / nB * 100) : 0;
+  setStatus('hts', 'ok', pct + '% have a height or level count in the map; the rest are estimated from footprint size');
+  setStatus('trf', 'ok', 'Simulated on the real road network. Volume follows a weekday/weekend time-of-day curve; left-hand driving.');
+}
+
+/* ---------- traffic simulation ---------- */
+function pickEdge() {
+  const r = Math.random() * city.cumW[city.cumW.length - 1]; let lo = 0, hi = city.cumW.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (city.cumW[m] < r) lo = m + 1; else hi = m; }
+  return city.edges[lo];
+}
+function respawn(v) { v.e = pickEdge(); v.dir = v.e.oneway ? 1 : (Math.random() < 0.5 ? 1 : -1); v.s = Math.random() * v.e.len; }
+function nextEdge(v) {
+  const node = v.dir === 1 ? v.e.b : v.e.a, all = city.adj.get(node) || [];
+  let opts = all.filter(o => o.e !== v.e); if (!opts.length) opts = all;
+  if (!opts.length) { respawn(v); return; }
+  let tot = 0; for (const o of opts) tot += Math.sqrt(o.e.wt);
+  let r = Math.random() * tot, pick = opts[0]; for (const o of opts) { r -= Math.sqrt(o.e.wt); if (r <= 0) { pick = o; break; } }
+  v.e = pick.e; v.dir = pick.dir; v.s = 0;
+}
+function todFactor(h, wd) {
+  const g = (m, s) => Math.exp(-((h - m) * (h - m)) / (2 * s * s));
+  const f = Math.min(1, 0.04 + 0.95 * g(9, 1.1) + 0.6 * g(13, 2.2) + 1.0 * g(17.5, 1.3) + 0.25 * g(20.5, 1.2));
+  return (wd === 0 || wd === 6) ? f * 0.7 : f;
+}
+let simAcc = 0, activeVeh = 0;
+function stepTraffic(dt) {
+  if (!city.vehMesh || !city.edges.length) return;
+  const target = Math.min(MAXV, Math.round(todFactor(simClock.hour, simClock.wd) * city.totalKm * 9));
+  activeVeh = target; city.vehMesh.count = ui.veh ? target : 0;
+  const arr = city.vehMesh.instanceMatrix.array;
+  for (const e of city.edges) e.count = 0;
+  for (let i = 0; i < target; i++) {
+    const v = vehicles[i], e = v.e;
+    v.s += e.spd * e.f * v.k * dt;
+    if (v.s >= e.len) { nextEdge(v); }
+    const ed = v.e; ed.count++;
+    const d = v.dir === 1 ? v.s : ed.len - v.s, cum = ed.cum; let lo = 0, hi = cum.length - 2;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (cum[m] <= d) lo = m; else hi = m - 1; }
+    const p = ed.p3, o = lo * 3, seg = (cum[lo + 1] - cum[lo]) || 1, t = clamp((d - cum[lo]) / seg, 0, 1);
+    let dx = p[o + 3] - p[o], dz = p[o + 5] - p[o + 2]; const L = Math.hypot(dx, dz) || 1; dx = dx / L * v.dir; dz = dz / L * v.dir;
+    const offL = ed.oneway ? 0 : ed.w * 0.24, m = i * 16;
+    arr[m] = dx; arr[m + 1] = 0; arr[m + 2] = dz; arr[m + 3] = 0; arr[m + 4] = 0; arr[m + 5] = 1; arr[m + 6] = 0; arr[m + 7] = 0;
+    arr[m + 8] = -dz; arr[m + 9] = 0; arr[m + 10] = dx; arr[m + 11] = 0;
+    arr[m + 12] = mix(p[o], p[o + 3], t) + dz * offL; arr[m + 13] = mix(p[o + 1], p[o + 4], t); arr[m + 14] = mix(p[o + 2], p[o + 5], t) - dx * offL; arr[m + 15] = 1;
+  }
+  city.vehMesh.instanceMatrix.needsUpdate = true;
+  simAcc += dt; if (simAcc < 0.5) return; simAcc = 0;
+  const col = city.roadMesh.geometry.attributes.color; let dirty = false;
+  for (const e of city.edges) {
+    const cap = Math.max(e.len, 60) / 7 * (e.oneway ? 1 : 2), fs = clamp(1 - 0.9 * e.count / cap, 0.2, 1);
+    e.f += ((e.measured != null ? e.measured : fs) - e.f) * 0.3;
+    const b = !ui.cong || e.wt < 1 ? 0 : e.f > 0.75 ? 1 : e.f > 0.5 ? 2 : e.f > 0.3 ? 3 : 4;
+    if (b !== e.bucket) {
+      e.bucket = b; dirty = true; const c = b === 0 ? e.base : RAMP[b - 1];
+      for (let k = e.v0; k < e.v0 + e.vn; k++) col.setXYZ(k, c[0], c[1], c[2]);
+    }
+  }
+  if (dirty) col.needsUpdate = true;
+  $('tVeh').textContent = target.toLocaleString();
+}
+
+/* ---------- TomTom (optional, experimental) ---------- */
+let ttKey = ''; try { ttKey = localStorage.getItem('thimphu3d.tt') || ''; } catch (e) {}
+$('ttKey').value = ttKey;
+let ttTimer = null;
+async function pollTomTom() {
+  if (!ttKey || !city.edges.length) return;
+  const byName = new Map();
+  for (const e of city.edges) if (e.wt >= 3 && e.name) { const c = byName.get(e.name); if (!c || e.len > c.len) byName.set(e.name, e); }
+  const samples = [...byName.values()].sort((a, b) => b.len - a.len).slice(0, 10);
+  if (!samples.length) { setStatus('trf', 'fail', 'No named main roads to sample for live traffic. Simulation continues.'); return; }
+  let ok = 0, err = '';
+  await Promise.all(samples.map(async e => {
+    const mid = (e.p3.length / 3 >> 1) * 3, lat = toLat(e.p3[mid + 2]), lon = toLon(e.p3[mid]);
+    try {
+      const r = await fetch('https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/12/json?point=' + lat.toFixed(5) + ',' + lon.toFixed(5) + '&unit=KMPH&key=' + encodeURIComponent(ttKey));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = (await r.json()).flowSegmentData;
+      if (!d || !(d.freeFlowSpeed > 0)) throw new Error('no data');
+      const ratio = clamp(d.currentSpeed / d.freeFlowSpeed, 0.1, 1); ok++;
+      for (const x of city.edges) if (x.name === e.name) x.measured = ratio;
+    } catch (ex) { err = ex.message; }
+  }));
+  if (ok) { setPill('trf', 'live', 'PART LIVE'); setStatus('trf', 'ok', 'TomTom returned measured speeds for ' + ok + ' of ' + samples.length + ' main roads. Other roads and all vehicle positions are simulated.'); }
+  else { for (const x of city.edges) x.measured = null; setPill('trf', 'sim', 'SIMULATED'); setStatus('trf', 'fail', 'TomTom returned no usable data (' + err + '). Simulation continues.'); }
+}
+function startTomTom() { if (ttTimer) clearInterval(ttTimer); ttTimer = null; if (ttKey) { pollTomTom(); ttTimer = setInterval(pollTomTom, 180000); } }
+$('ttSave').onclick = () => { ttKey = $('ttKey').value.trim(); try { localStorage.setItem('thimphu3d.tt', ttKey); } catch (e) {} startTomTom(); };
+$('ttClear').onclick = () => {
+  ttKey = ''; $('ttKey').value = ''; try { localStorage.removeItem('thimphu3d.tt'); } catch (e) {}
+  startTomTom(); for (const x of city.edges) x.measured = null;
+  setPill('trf', 'sim', 'SIMULATED'); if (city.edges.length) setStatus('trf', 'ok', 'Simulated on the real road network.');
+};
+
+/* ---------- weather, air quality, sun ---------- */
+const WMO = { 0: 'Clear', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Drizzle', 56: 'Freezing drizzle', 57: 'Freezing drizzle',
+  61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain', 71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 77: 'Snow grains', 80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy showers',
+  85: 'Snow showers', 86: 'Snow showers', 95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm' };
+const wx = { cloud: 0.2, rain: 0, snow: 0, fog: 0, loaded: false };
+const CLAT = 27.4728, CLON = 89.6393;
+async function loadWeather() {
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + CLAT + '&longitude=' + CLON + '&current=temperature_2m,relative_humidity_2m,precipitation,rain,snowfall,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m&timezone=Asia%2FThimphu');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const c = (await r.json()).current; if (!c) throw new Error('no data');
+    wx.cloud = clamp((c.cloud_cover || 0) / 100, 0, 1); wx.snow = c.snowfall > 0 || [71, 73, 75, 77, 85, 86].includes(c.weather_code) ? 1 : 0;
+    wx.rain = wx.snow ? 0 : clamp(Math.max(c.rain || 0, c.precipitation || 0) / 2, 0, 1) || ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(c.weather_code) ? 0.4 : 0);
+    wx.fog = [45, 48].includes(c.weather_code) ? 1 : 0; wx.loaded = true;
+    const desc = WMO[c.weather_code] || 'Code ' + c.weather_code;
+    $('tTemp').textContent = Math.round(c.temperature_2m) + ' °C'; $('tWind').textContent = Math.round(c.wind_speed_10m) + ' km/h';
+    $('cond').textContent = desc.toLowerCase() + ', ' + Math.round(c.cloud_cover) + '% cloud';
+    setStatus('wx', 'ok', desc + ', ' + c.temperature_2m + ' °C, humidity ' + c.relative_humidity_2m + '%, updated ' + String(c.time || '').slice(11) + ' (Open-Meteo, refreshes every 10 min)');
+  } catch (e) { $('cond').textContent = 'conditions unavailable'; setStatus('wx', 'fail', 'Could not load weather (' + e.message + '). Sky uses a default.'); }
+  try {
+    const r = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + CLAT + '&longitude=' + CLON + '&current=pm2_5,pm10,us_aqi&timezone=Asia%2FThimphu');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const c = (await r.json()).current; if (!c) throw new Error('no data');
+    const a = c.us_aqi, cat = a == null ? '' : a <= 50 ? 'good' : a <= 100 ? 'moderate' : a <= 150 ? 'unhealthy for sensitive groups' : a <= 200 ? 'unhealthy' : 'very unhealthy';
+    $('tPm').textContent = (c.pm2_5 != null ? Math.round(c.pm2_5) : '–') + ' µg/m³';
+    setStatus('aq', 'ok', 'US AQI ' + a + (cat ? ' (' + cat + ')' : '') + ', PM10 ' + c.pm10 + ' µg/m³. From the CAMS atmospheric model, not a sensor in the city.');
+  } catch (e) { setStatus('aq', 'fail', 'Could not load air quality (' + e.message + ').'); }
+}
+function sunPos(ms, lat, lon) {
+  const rad = Math.PI / 180, n = ms / 86400000 + 2440587.5 - 2451545.0;
+  const L = (280.460 + 0.9856474 * n) % 360, g = ((357.528 + 0.9856003 * n) % 360) * rad;
+  const lam = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * rad, eps = (23.439 - 0.0000004 * n) * rad;
+  const ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam)), dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+  const gmst = (18.697374558 + 24.06570982441908 * n) % 24, Hh = (gmst * 15 + lon) * rad - ra, phi = lat * rad;
+  const alt = Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(Hh));
+  const az = Math.atan2(-Math.sin(Hh), Math.tan(dec) * Math.cos(phi) - Math.sin(phi) * Math.cos(Hh));
+  return { alt, az };
+}
+const TZH = 6, simClock = { live: true, hour: 12, wd: 1, ms: Date.now() };
+function updateClock() {
+  const now = Date.now(), th = new Date(now + TZH * 3600e3);
+  if (simClock.live) { simClock.ms = now; simClock.hour = th.getUTCHours() + th.getUTCMinutes() / 60; $('hour').value = simClock.hour; }
+  else simClock.ms = Date.UTC(th.getUTCFullYear(), th.getUTCMonth(), th.getUTCDate()) - TZH * 3600e3 + simClock.hour * 3600e3;
+  simClock.wd = th.getUTCDay();
+  const hh = n => String(n).padStart(2, '0'), fmt = h => hh(Math.floor(h) % 24) + ':' + hh(Math.floor((h % 1) * 60));
+  $('clock').textContent = hh(th.getUTCHours()) + ':' + hh(th.getUTCMinutes());
+  $('simTime').textContent = simClock.live ? 'Live: ' + fmt(simClock.hour) : 'Showing ' + fmt(simClock.hour) + ' today';
+}
+const cDay = new THREE.Color(0x8fb6dc), cNight = new THREE.Color(0x070a14), cGrey = new THREE.Color(0xa7adb3), cDusk = new THREE.Color(0xe9a070), cTmp = new THREE.Color();
+let nightF = 0;
+function updateSky() {
+  const s = sunPos(simClock.ms, CLAT, CLON), deg = s.alt * 180 / Math.PI, day = sstep(-6, 8, deg), cl = ui.wx ? wx.cloud : 0.1;
+  nightF = 1 - day;
+  cTmp.copy(cDay).lerp(cGrey, cl * 0.75).lerp(cDusk, (1 - cl) * 0.5 * sstep(-6, 1, deg) * (1 - sstep(1, 12, deg)));
+  cTmp.multiplyScalar(mix(0.06, 1, day)).lerp(cNight, (1 - day) * 0.6);
+  scene.background.copy(cTmp); scene.fog.color.copy(cTmp);
+  scene.fog.density = 0.000035 + (ui.wx ? cl * 0.00003 + wx.rain * 0.00008 + wx.snow * 0.0001 + wx.fog * 0.0004 : 0);
+  if (deg > -2) { sun.position.set(Math.cos(s.alt) * Math.sin(s.az), Math.max(Math.sin(s.alt), 0.03), -Math.cos(s.alt) * Math.cos(s.az)).multiplyScalar(10000); sun.intensity = day * (1 - 0.6 * cl) * 1.05; sun.color.setHex(deg < 10 ? 0xffd2a0 : 0xfff4e0); }
+  else { sun.position.set(-3000, 8000, 2000); sun.intensity = 0.10; sun.color.setHex(0x9fb4ff); }
+  hemi.intensity = 0.16 + 0.62 * day;
+  if (city.bMesh) city.bMesh.material.emissiveIntensity = nightF * 0.28;
+  if (city.vehMesh) city.vehMesh.material.emissiveIntensity = nightF * 0.6;
+  setStatus('sun', 'ok', 'Sun ' + deg.toFixed(1) + '° ' + (deg > 0 ? 'above' : 'below') + ' the horizon, bearing ' + Math.round((s.az * 180 / Math.PI + 360) % 360) + '°, computed for ' + (simClock.live ? 'now' : 'the selected time'));
+}
+/* precipitation */
+const PN = 3500, pPos = new Float32Array(PN * 3);
+for (let i = 0; i < PN; i++) { pPos[i * 3] = (hash(i) - 0.5) * 1800; pPos[i * 3 + 1] = hash(i + 0.5) * 900; pPos[i * 3 + 2] = (hash(i + 0.25) - 0.5) * 1800; }
+const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const precip = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0xdde8f5, size: 2, sizeAttenuation: false, transparent: true, opacity: 0.55, depthWrite: false }));
+precip.frustumCulled = false; precip.visible = false; scene.add(precip);
+function stepPrecip(dt) {
+  const on = ui.wx && (wx.rain > 0 || wx.snow > 0); precip.visible = on; if (!on) return;
+  const sp = wx.snow ? 6 : 90; for (let i = 0; i < PN; i++) { let y = pPos[i * 3 + 1] - sp * dt; if (y < 0) y += 900; pPos[i * 3 + 1] = y; }
+  pGeo.attributes.position.needsUpdate = true; precip.material.size = wx.snow ? 3 : 2;
+  precip.position.set(controls.target.x, controls.target.y - 150, controls.target.z);
+}
+
+/* ---------- UI ---------- */
+const ui = { veh: true, cong: true, lab: true, wx: true };
+$('ckB').onchange = e => { if (city.bMesh) city.bMesh.visible = e.target.checked; };
+$('ckV').onchange = e => { ui.veh = e.target.checked; };
+$('ckC').onchange = e => { ui.cong = e.target.checked; simAcc = 1; };
+$('ckL').onchange = e => { ui.lab = e.target.checked; $('labels').style.display = ui.lab ? '' : 'none'; };
+$('ckW').onchange = e => { ui.wx = e.target.checked; updateSky(); };
+$('hour').oninput = e => { simClock.live = false; simClock.hour = parseFloat(e.target.value); $('btnLive').className = ''; updateClock(); updateSky(); };
+$('btnLive').onclick = () => { simClock.live = true; $('btnLive').className = 'on'; updateClock(); updateSky(); };
+$('extent').value = extKey;
+$('extent').onchange = e => { location.hash = e.target.value === 'full' ? '#full' : ''; location.reload(); };
+$('btnRefresh').onclick = async () => { await cachePut(CACHE_KEY, null); location.reload(); };
+$('togL').onclick = () => { $('left').classList.toggle('show'); $('right').classList.remove('show'); };
+$('togR').onclick = () => { $('right').classList.toggle('show'); $('left').classList.remove('show'); };
+$('infoX').onclick = () => { $('info').style.display = 'none'; };
+$('views').firstElementChild.onclick = () => flyTo(0, 0, 6500, true);
+
+let fly = null;
+function flyTo(x, z, dist, high) {
+  const t1 = new THREE.Vector3(x, heightAt(x, z), z);
+  const p1 = high ? new THREE.Vector3(x - 1800, t1.y + 3600, z + 5600) : new THREE.Vector3(x - dist * 0.45, t1.y + dist * 0.55, z + dist * 0.75);
+  fly = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1, t1 };
+}
+/* building pick */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let down = null;
+canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || !city.bMesh || !city.bMesh.visible) return;
+  ptr.set(e.clientX / window.innerWidth * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObject(city.bMesh)[0]; if (!hit) { $('info').style.display = 'none'; return; }
+  const b = city.bInfo[city.triB[hit.faceIndex]]; if (!b) return;
+  const body = $('infoBody'); body.textContent = '';
+  const add = (tag, txt) => { const el = document.createElement(tag); el.textContent = txt; body.appendChild(el); return el; };
+  add('b', b.name || 'Building' + (b.kind && b.kind !== 'yes' ? ' (' + b.kind + ')' : ''));
+  add('div', 'Height ' + b.h.toFixed(1) + ' m, ' + b.src); add('div', 'Footprint ' + Math.round(b.area) + ' m², ground at ' + b.elev + ' m');
+  const a = add('a', 'View in OpenStreetMap'); a.href = 'https://www.openstreetmap.org/' + b.type + '/' + b.id; a.target = '_blank'; a.rel = 'noopener';
+  $('info').style.display = 'block';
+});
+
+/* ---------- loop ---------- */
+const proj = new THREE.Vector3(); let last = performance.now(), skyAcc = 9;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
+  if (fly) { fly.t = Math.min(1, fly.t + dt / 1.4); const k = sstep(0, 1, fly.t); camera.position.lerpVectors(fly.p0, fly.p1, k); controls.target.lerpVectors(fly.t0, fly.t1, k); if (fly.t >= 1) fly = null; }
+  controls.update();
+  const gy = heightAt(camera.position.x, camera.position.z) + 8; if (camera.position.y < gy) camera.position.y = gy;
+  const dist = camera.position.distanceTo(controls.target); camera.near = Math.max(4, dist * 0.02); camera.updateProjectionMatrix();
+  skyAcc += dt; if (skyAcc > 1) { skyAcc = 0; updateClock(); updateSky(); }
+  stepTraffic(dt); stepPrecip(dt);
+  if (ui.lab) {
+    const w = window.innerWidth, h = window.innerHeight;
+    for (const l of city.labels) {
+      proj.copy(l.v).project(camera); const d = camera.position.distanceTo(l.v);
+      const vis = proj.z < 1 && proj.z > -1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1 && d < (l.major ? 16000 : 6500);
+      l.el.style.transform = vis ? 'translate(' + ((proj.x + 1) / 2 * w).toFixed(1) + 'px,' + ((1 - proj.y) / 2 * h).toFixed(1) + 'px) translate(-50%,-100%)' : 'translate(-999px,-999px)';
+    }
+  }
+  renderer.render(scene, camera);
+}
+
+async function main() {
+  updateClock(); updateSky(); requestAnimationFrame(frame);
+  loadWeather().then(updateSky); setInterval(() => loadWeather().then(updateSky), 600000);
+  await loadTerrain();
+  setStatus('osm', 'wait', 'downloading the map from OpenStreetMap (first load can take up to a minute)');
+  setStatus('hts', 'wait', 'waiting for the map'); setStatus('trf', 'wait', 'waiting for the road network');
+  try {
+    const r = await fetchOSM(); buildCity(r.data);
+    if (r.cached) $('t_osm').textContent += ', saved copy from ' + new Date(r.ts).toISOString().slice(0, 10);
+    updateSky(); startTomTom();
+  } catch (e) {
+    setStatus('osm', 'fail', 'Could not load the map (' + e.message + '). Press "Refresh map" to try again.');
+    setStatus('hts', 'fail', 'No buildings loaded'); setStatus('trf', 'fail', 'No road network loaded');
+  }
+}
+window.__thimphu = { city, vehicles, heightAt, sunPos, todFactor, simClock, wx, ui, scene, EXT, toX, toZ, state: () => ({ E0, Emax, terrainReal, activeVeh }) };
+main();
+})();
+</script>
+</body>
+</html>
